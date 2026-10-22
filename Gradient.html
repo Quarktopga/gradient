@@ -1,0 +1,1764 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Gradient</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Plateau de jeu de société : table violette, cartes papier, ombres décalées dures.
+   Une seule ambiance sombre voulue : la table. */
+:root{
+  --table:#2a2566; --table2:#3b3496; --paper:#f2f0fa; --ink:#1b1740; --tint:#e6e1fb;
+  --yel:#ffd23f; --blu:#27b3ff; --grn:#39c18a; --pin:#ff6fa5; --ora:#ff6b3d; --amb:#ff9f1c; --vio:#9d8cff;
+  --good:#c9f3df; --bad:#ffe3d6;
+  --d:'Bricolage Grotesque','Arial Black',system-ui,sans-serif;
+  --b:'Atkinson Hyperlegible',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background-color:var(--table);
+  background-image:radial-gradient(circle at 50% 28%,var(--table2) 0,rgba(42,37,102,0) 62%),radial-gradient(rgba(255,255,255,.06) 1px,transparent 1.4px);
+  background-size:auto,7px 7px;color:var(--paper);font-family:var(--b);font-size:15px;line-height:1.3;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  overflow:hidden;-webkit-tap-highlight-color:transparent;
+}
+button{font-family:inherit;color:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
+#app{height:100%;max-width:430px;margin:0 auto;display:flex;flex-direction:column;position:relative;min-height:0}
+.scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:12px;padding:12px 2px 14px;scrollbar-width:thin;scrollbar-color:rgba(242,240,250,.35) transparent}
+.scroll>*{flex:none}
+.foot{flex:none;padding:8px 0 10px;display:flex;flex-direction:column;gap:8px}
+
+/* Type */
+.d{font-family:var(--d);font-weight:800}
+.lbl{font-family:var(--d);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--paper)}
+.cap{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.mut{opacity:.7}
+.ink{color:var(--ink)}
+
+/* Objets */
+.paper{background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink)}
+.dots{background-image:radial-gradient(rgba(27,23,64,.16) 1px,transparent 1.4px);background-size:6px 6px}
+.btn{min-height:52px;padding:6px 16px;border-radius:14px;border:3px solid var(--ink);background:var(--yel);color:var(--ink);box-shadow:0 4px 0 var(--ink);font-family:var(--d);font-weight:800;font-size:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-align:center;transition:transform .08s,box-shadow .08s}
+.btn small{font-family:var(--b);font-weight:700;font-size:12px}
+.btn:active:not(.off){transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn.sec{background:var(--paper)}
+.btn.grn{background:var(--grn)}
+.btn.off{background:rgba(242,240,250,.55);color:rgba(27,23,64,.7);box-shadow:0 2px 0 rgba(27,23,64,.6);border-color:rgba(27,23,64,.7);transform:translateY(2px)}
+.row{display:flex;gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;border:2px solid var(--ink);border-radius:99px;padding:3px 10px;background:var(--paper);color:var(--ink)}
+.chip.ok{background:var(--good)}
+.chip.no{background:var(--bad);border-color:var(--ora)}
+.pill{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:2px solid var(--ink);background:var(--paper);color:var(--ink)}
+.bar{display:flex;align-items:center;gap:10px;background:var(--paper);color:var(--ink);border:2.5px solid var(--ink);border-radius:18px;box-shadow:0 3px 0 var(--ink);padding:8px 10px;flex:none;margin-top:12px}
+.bar .t{display:flex;flex-direction:column;line-height:1.1;flex:1;min-width:0}
+.bar .t b{font-family:var(--d);font-weight:800;font-size:21px}
+.bar .t span{font-size:11px;font-weight:700;opacity:.65;letter-spacing:.06em;text-transform:uppercase}
+.sq{width:44px;height:44px;flex:none;border-radius:12px;border:2px solid var(--ink);background:var(--blu);display:grid;place-items:center;padding:0;color:var(--ink)}
+.sq.y{background:var(--yel)}
+
+/* Bulle de savoir */
+.sav{background:var(--yel);color:var(--ink);border:2.5px solid var(--ink);border-radius:14px;box-shadow:0 3px 0 var(--ink);padding:9px 12px;display:flex;flex-direction:column;gap:2px}
+.sav .cap{font-size:11px}
+.sav span:last-child{font-size:14px;line-height:1.3;font-weight:700}
+
+/* Bandeau de plateau */
+.hud{flex:none;margin-top:10px;padding:8px 10px 10px;display:flex;flex-direction:column;gap:8px}
+.hud .top{display:flex;align-items:center;gap:8px}
+.phases{display:flex;gap:4px;flex:1;min-width:0}
+.ph{flex:1;font-size:10.5px;font-weight:700;text-align:center;padding:4px 2px;border-radius:99px;border:2px solid rgba(27,23,64,.35);color:rgba(27,23,64,.55);white-space:nowrap;overflow:hidden;text-overflow:clip}
+.ph.on{background:var(--ink);color:var(--yel);border-color:var(--ink)}
+.ph.done{background:var(--tint);color:var(--ink);border-color:var(--ink)}
+.inds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.ind{text-align:left;font-family:var(--b);color:var(--ink);cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:6px 5px 7px;border:2.5px solid var(--ink);border-radius:12px;min-width:0}
+.ind .cap{font-size:9.5px;letter-spacing:.02em;display:flex;align-items:center;gap:3px;white-space:nowrap}
+.ind b{font-family:var(--d);font-weight:800;font-size:18px;line-height:1.05;white-space:nowrap}
+.ind small{font-size:11px;font-weight:700;line-height:1.1;min-height:12px}
+.pips{display:flex;gap:2px}
+.pips i{flex:1;height:7px;border:1.5px solid var(--ink);border-radius:2px;background:rgba(27,23,64,.1);max-width:14px}
+.pips i.f{background:var(--ink)}
+
+/* Piste vers le Seuil */
+.track{padding:10px 14px 8px;border:2.5px solid rgba(242,240,250,.5);border-radius:18px;background:rgba(242,240,250,.08);display:flex;flex-direction:column;gap:4px}
+.lane{position:relative;height:50px}
+.lane .rail{position:absolute;left:0;right:0;top:33px;height:6px;background:repeating-linear-gradient(90deg,rgba(242,240,250,.7) 0 12px,transparent 12px 18px)}
+.flag{position:absolute;top:2px;width:2px;height:37px;background:var(--yel)}
+.flag::before{content:"";position:absolute;left:2px;top:0;width:24px;height:14px;background:var(--yel);clip-path:polygon(0 0,100% 50%,0 100%)}
+.pawn{position:absolute;width:22px;height:22px;margin-left:-11px;border-radius:50%;border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink);transition:left 1.1s cubic-bezier(.3,1.4,.5,1)}
+.ghost{position:absolute;width:20px;height:20px;margin-left:-10px;border-radius:50%;border:2.5px dashed currentColor}
+.trackkey{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--paper)}
+.trackkey span{display:flex;align-items:center;gap:5px}
+.trackkey i{width:10px;height:10px;border-radius:50%;border:2px solid var(--ink);display:inline-block}
+
+/* Zones */
+.zone{overflow:hidden;display:flex;flex-direction:column}
+.zone>header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;border-bottom:3px solid var(--ink)}
+.zone>header b{font-family:var(--d);font-weight:800;font-size:18px}
+.zone>header span{font-size:12px;font-weight:700}
+.zone .body{padding:10px 8px 10px;display:flex;flex-direction:column;gap:8px}
+.spots{display:flex;gap:4px;justify-content:space-around}
+.spot{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;padding:2px;min-width:0;flex:1;color:var(--ink);font-family:var(--b)}
+.ring{width:58px;height:58px;border-radius:50%;border:2.5px dashed var(--ink);display:grid;place-items:center;background:rgba(27,23,64,.04);position:relative;transition:transform .1s}
+.spot:active .ring{transform:scale(.94)}
+.spot.on .ring{border-style:solid;background:var(--tint)}
+.spot .nm{font-size:13px;font-weight:700;line-height:1.1;text-align:center}
+.spot .co{font-size:11px;font-weight:700;background:var(--ink);color:var(--yel);padding:1px 7px;border-radius:99px;white-space:nowrap}
+.spot .co.fr{background:var(--grn);color:var(--ink)}
+.spot.lock .ring{opacity:.45}
+.spot.lock .nm{opacity:.6}
+.mp{animation:pop .28s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.3)}to{transform:scale(1)}}
+.rooms{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.room{height:38px;border-radius:9px;border:2.5px solid var(--ink);display:grid;place-items:center}
+.room.o{background:var(--blu);box-shadow:0 2px 0 var(--ink)}
+.room.r{background:repeating-linear-gradient(45deg,var(--blu) 0 5px,var(--paper) 5px 10px);box-shadow:0 2px 0 var(--ink)}
+.room.m{background:var(--vio);box-shadow:0 2px 0 var(--ink)}
+.room.e{border-style:dashed;opacity:.6}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{position:relative;text-align:left;min-height:62px;padding:8px 10px;border-radius:12px;border:2.5px solid var(--ink);background:var(--paper);box-shadow:0 3px 0 var(--ink);display:flex;flex-direction:column;gap:2px;color:var(--ink);font-family:var(--b)}
+.tile .cap{font-size:10.5px;opacity:.65}
+.tile b{font-family:var(--d);font-weight:800;font-size:15px;line-height:1.1}
+.tile .tm{position:absolute;right:6px;top:6px}
+.tile:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.mini{display:flex;gap:6px;align-items:center;font-size:12px;font-weight:700}
+
+/* Main */
+.hand{display:flex;padding:6px 6px 14px 22px;overflow-x:auto;scrollbar-width:none}
+.hand::-webkit-scrollbar{display:none}
+.card{flex:none;width:112px;min-height:138px;margin-left:-16px;background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:14px;box-shadow:0 4px 0 var(--ink);padding:8px;display:flex;flex-direction:column;gap:4px;text-align:left;position:relative;font-family:var(--b);transition:transform .15s}
+.card:nth-child(1){transform:rotate(-4deg)}
+.card:nth-child(2){transform:rotate(-1.5deg) translateY(-3px)}
+.card:nth-child(3){transform:rotate(1.5deg) translateY(-3px)}
+.card:nth-child(4){transform:rotate(4deg)}
+.card:active{transform:translateY(-8px) rotate(0)}
+.card b{font-family:var(--d);font-weight:800;font-size:14px;line-height:1.05}
+.card .z{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--ink);color:var(--yel);border-radius:99px;padding:1px 7px;align-self:flex-start}
+.card span.d2{font-size:12px;font-weight:700;line-height:1.2}
+.card.used{opacity:.55}
+.card.used::after{content:"Utilisée";position:absolute;right:6px;bottom:6px;font-size:10px;font-weight:700;background:var(--grn);border:2px solid var(--ink);border-radius:99px;padding:0 6px}
+.tray{display:flex;align-items:center;gap:10px}
+.tray .mps{display:flex;gap:2px;align-items:flex-end}
+.tray .tx{flex:1;font-size:12px;font-weight:700;line-height:1.2}
+
+/* Jarres, dés, pastilles */
+.jars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.jar{padding:8px;display:flex;flex-direction:column;align-items:center;gap:5px;border:2.5px solid var(--ink);border-radius:14px;background:var(--paper);box-shadow:0 3px 0 var(--ink);color:var(--ink)}
+.jar.mq{border-color:var(--ora)}
+.jarb{position:relative;width:34px;height:96px;border:2.5px solid var(--ink);border-radius:8px;background:#fff;overflow:hidden}
+.jarb .fl{position:absolute;left:0;right:0;bottom:0;border-top:2.5px solid var(--ink);transition:height .5s}
+.jarb .rq{position:absolute;left:0;right:0;border-top:2.5px dashed var(--ink)}
+.die{width:56px;height:56px;flex:none;border-radius:12px;background:var(--paper);color:var(--ink);border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink);transform:rotate(-8deg);display:grid;place-items:center;font-family:var(--d);font-weight:800;font-size:28px}
+.die.roll{animation:roll .5s linear infinite}
+@keyframes roll{0%{transform:rotate(-8deg) translateY(0)}25%{transform:rotate(80deg) translateY(-8px)}50%{transform:rotate(170deg) translateY(0)}75%{transform:rotate(260deg) translateY(-6px)}100%{transform:rotate(352deg) translateY(0)}}
+.dbar{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;height:22px}
+.dbar span{border:2px solid var(--ink)}
+.shelf{display:flex;align-items:flex-end;gap:8px}
+.size{flex:1;background:var(--paper);color:var(--ink);border:2.5px solid var(--ink);border-radius:12px;box-shadow:0 3px 0 var(--ink);padding:8px 6px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;min-width:0;font-family:var(--b)}
+.size b{font-family:var(--d);font-weight:800;font-size:15px;line-height:1}
+.size small{font-size:11px;font-weight:700;opacity:.8;line-height:1.15}
+.size.sel{background:var(--yel);border-width:3px;box-shadow:0 5px 0 var(--ink);transform:translateY(-4px)}
+.size.lk{border-style:dashed;box-shadow:none;background:rgba(242,240,250,.9)}
+.size .tg{font-size:10.5px;font-weight:700;background:var(--ink);color:var(--yel);border-radius:99px;padding:1px 6px}
+
+/* Prix */
+.doors{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.door{text-align:left;padding:10px;border-radius:14px;border:2.5px solid var(--ink);background:var(--paper);color:var(--ink);box-shadow:0 3px 0 var(--ink);display:flex;flex-direction:column;gap:4px;font-family:var(--b);min-height:92px}
+.door b{font-family:var(--d);font-weight:800;font-size:17px;line-height:1.05}
+.door.sel{background:var(--yel);box-shadow:0 5px 0 var(--ink);transform:translateY(-3px);border-width:3px}
+.door.lk{border-style:dashed;box-shadow:none;opacity:.75}
+.prow{width:100%;text-align:left;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1.6fr);gap:6px;align-items:center;padding:7px 10px;border-radius:12px;border:2.5px solid var(--ink);background:var(--paper);color:var(--ink);box-shadow:0 3px 0 var(--ink);font-family:var(--b);min-height:50px}
+.prow.sel{background:var(--yel);border-width:3px;box-shadow:0 5px 0 var(--ink);transform:translateY(-2px)}
+.prow b{font-family:var(--d);font-weight:800;font-size:15px;line-height:1.05}
+.prow .pb{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pbx{display:flex;flex-direction:column;gap:2px}
+.pbx span{font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.pbx .pips i{height:7px}
+
+/* Produits */
+.hexa{position:relative;height:322px;flex:none;width:358px;align-self:center}
+@media (max-width:392px){.hexa{transform:scale(.9);transform-origin:top center;margin-bottom:-32px}}
+.piece{position:absolute;width:76px;height:76px;border:3px solid var(--ink);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0;color:var(--ink);font-family:var(--b);box-shadow:0 3px 0 var(--ink)}
+.piece b{font-family:var(--d);font-weight:800;font-size:13px;line-height:1}
+.piece small{font-size:10.5px;font-weight:700;line-height:1}
+.piece.lk{background:var(--paper);border-style:dashed;box-shadow:none;opacity:.9}
+.piece.av{background:#fff}
+.piece.sel{box-shadow:0 6px 0 var(--ink);transform:translateY(-4px);outline:3px solid var(--yel);outline-offset:2px}
+
+/* Contrats */
+.slot{flex:1;height:48px;border:2.5px dashed rgba(242,240,250,.65);border-radius:12px;display:grid;place-items:center;font-size:12.5px;font-weight:700;color:var(--paper);text-align:center;padding:0 4px}
+.slot.fill{border-style:solid;background:var(--paper);color:var(--ink);border-color:var(--ink);box-shadow:0 3px 0 var(--ink)}
+.crow{display:flex;align-items:center;gap:10px;min-height:56px;padding:6px 12px;background:var(--paper);color:var(--ink);border:2.5px solid var(--ink);border-radius:14px;box-shadow:0 3px 0 var(--ink);text-align:left;width:100%;font-family:var(--b)}
+.crow.lk{border-style:dashed;box-shadow:none;background:rgba(242,240,250,.9)}
+.crow .n{flex:1;display:flex;flex-direction:column;line-height:1.1}
+.crow .n b{font-family:var(--d);font-weight:800;font-size:16px}
+.crow .n span{font-size:12px;font-weight:700;opacity:.75}
+
+/* Savoir / Actualité */
+.mask>*{width:100%;max-width:520px;margin-left:auto;margin-right:auto}
+.mask{position:absolute;inset:0;background:rgba(20,16,60,.78);display:flex;flex-direction:column;justify-content:center;gap:12px;padding:0 0 10px;z-index:20;overflow-y:auto;animation:fade .2s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.bk{padding:11px 16px;display:flex;flex-direction:column;gap:3px;border-bottom:2px solid rgba(27,23,64,.18)}
+.bk:last-child{border-bottom:0}
+.bk p{margin:0;font-size:14.5px;line-height:1.32;font-weight:700}
+.bk.t{background:var(--tint)}
+.evart{height:150px;background-color:var(--yel);border-bottom:3px solid var(--ink);position:relative;display:grid;place-items:center}
+.tok{text-align:left;min-height:116px;padding:12px;border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);display:flex;flex-direction:column;justify-content:space-between;gap:6px;color:var(--ink);font-family:var(--b)}
+.tok b{font-family:var(--d);font-weight:800;font-size:17px;line-height:1.1}
+.tok .bl{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;line-height:1.2}
+.tok:active:not(.off){transform:translateY(3px);box-shadow:0 2px 0 var(--ink)}
+.tok.off{opacity:.55;box-shadow:none}
+
+/* Lancer / bilan */
+.act{display:flex;align-items:center;gap:12px;padding:10px 12px;opacity:0;transform:translateY(10px);animation:up .35s forwards}
+@keyframes up{to{opacity:1;transform:none}}
+.act .ic{width:40px;height:40px;flex:none;border-radius:50%;border:2.5px solid var(--ink);background:var(--yel);display:grid;place-items:center}
+.act.neg .ic{background:var(--ora)}
+.act b{font-family:var(--d);font-weight:800;font-size:15.5px;line-height:1.1}
+.act span{font-size:13px;font-weight:700;line-height:1.25}
+.rc{padding:10px 14px;display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1.1fr);align-items:center;gap:8px;border-bottom:2px dashed rgba(27,23,64,.25)}
+.rc:last-child{border-bottom:0}
+.rc .f{display:flex;flex-direction:column;gap:2px;line-height:1.15}
+.rc .f b{font-family:var(--d);font-weight:800;font-size:14px}
+.rc .e{display:flex;flex-direction:column;gap:2px;line-height:1.15}
+.rc .e span{font-size:12.5px;font-weight:700}
+.rc .e .st{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.rc .e .st.pos{color:#0f7a4f}.rc .e .st.neg{color:#b53a12}
+.deltas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.dl{padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--paper);color:var(--ink);border:2.5px solid var(--ink);border-radius:12px;box-shadow:0 3px 0 var(--ink)}
+.dl .cap{font-size:10px;letter-spacing:.05em}
+.dl b{font-family:var(--d);font-weight:800;font-size:16px;white-space:nowrap}
+
+/* Couverture */
+.cover{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;padding:12px 0}
+.title{font-family:var(--d);font-weight:800;font-size:72px;line-height:.9;color:var(--paper);text-shadow:4px 4px 0 var(--ink),-1px -1px 0 var(--ink);margin:0;letter-spacing:-.01em}
+
+/* Toast */
+.toast{position:absolute;left:8px;right:8px;bottom:84px;z-index:30;background:var(--ink);color:var(--paper);border:2.5px solid var(--yel);border-radius:14px;padding:10px 14px;font-weight:700;font-size:14px;text-align:center;animation:up .2s forwards;pointer-events:none}
+
+/* Carnet */
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ct{min-height:76px;padding:9px 11px;border:2.5px solid var(--ink);border-radius:14px;background:var(--paper);color:var(--ink);box-shadow:0 3px 0 var(--ink);text-align:left;display:flex;flex-direction:column;gap:3px;font-family:var(--b)}
+.ct b{font-family:var(--d);font-weight:800;font-size:15px;line-height:1.05}
+.ct.lk{background:transparent;color:var(--paper);border:2.5px dashed rgba(242,240,250,.5);box-shadow:none}
+
+/* Version ordinateur */
+@media (min-width:900px){
+  body{font-size:16px}
+  #app{max-width:720px}
+  #app[data-s=board]{max-width:1160px}
+  .scroll{padding:16px 6px 18px}
+  .foot{align-items:center}.foot>*{width:100%;max-width:560px}
+  #app[data-s=board] .scroll.board{flex-direction:row;flex-wrap:wrap;gap:18px;align-content:flex-start;align-items:flex-start}
+  .scroll.board>.track,.scroll.board>.lbl,.scroll.board>.hand{width:100%}
+  .scroll.board>.zone{width:calc((100% - 36px)/3)}
+  .scroll.board>.zone:nth-of-type(5){width:calc((200% - 72px)/3 + 18px)}
+  .scroll.board>.zone:nth-of-type(5) .tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .scroll.board>.row{max-width:640px;width:100%;margin:0 auto}
+  .hand{justify-content:center;padding-top:14px}
+  .card{width:150px;min-height:170px;margin-left:-10px;padding:12px}
+  .card b{font-size:16px}.card span.d2{font-size:13.5px}
+  .hud{padding:12px 16px 14px}.ind b{font-size:22px}.ind .cap{font-size:11px}
+  .tray{justify-content:center}.tray .tx{flex:none}
+  .ph{font-size:12px;padding:5px 4px}
+  .btn:hover:not(.off){filter:brightness(1.07)}
+  .spot:hover .ring{transform:scale(1.07)}
+  .tile:hover,.size:hover,.door:hover,.prow:hover,.crow:hover,.tok:hover:not(.off),.ct:hover,.piece:hover,.ind:hover{transform:translateY(-2px)}
+  .size.sel:hover{transform:translateY(-5px)}
+  .title{font-size:96px}
+}
+@media (prefers-reduced-motion:reduce){.act,.mp,.mask,.toast{animation:none;opacity:1;transform:none}.die.roll{animation:none}.pawn{transition:none}}
+@media (max-width:380px){.title{font-size:60px}.ind b{font-size:16px}.ind .cap{font-size:9px;letter-spacing:0}}
+</style>
+<div id="app"></div>
+<script>
+/* ===== DONNÉES DU JEU ===== */
+const INK = '#1b1740';
+const MAXY = 10;          // années
+const SEUIL = 6;          // position du Seuil sur la piste (0 à 10)
+const DATA_MAX = 8, ROOM_MAX = 5, TALENT_MAX = 5, SEAL_MAX = 3;
+
+const SIZES = [
+  { id: 1, name: 'Petit',     par: '7 Md',     data: 1, rooms: 1, talent: 2, cost: 4 },
+  { id: 2, name: 'Moyen',     par: '70 Md',    data: 3, rooms: 2, talent: 3, cost: 12 },
+  { id: 3, name: 'Grand',     par: '400 Md',   data: 5, rooms: 4, talent: 5, cost: 34 },
+  { id: 4, name: 'Frontière', par: '2 000 Md', data: 7, rooms: 5, talent: 7, cost: 65, unlock: 6 }
+];
+
+// usage : attire du monde / rev : argent par client / charge : calcul consommé
+const PRICES = [
+  { id: 'pay',   name: 'Payant seulement', usage: 1, rev: 5, charge: 1, tip: 'Seules les personnes qui paient entrent. Peu de monde, mais chacune rapporte beaucoup et pèse peu sur vos serveurs.' },
+  { id: 'free',  name: 'Freemium',         usage: 4, rev: 2, charge: 4, tip: 'Une offre gratuite pour essayer, une offre payante pour aller plus loin. Elle attire beaucoup de monde, mais les personnes qui ne paient pas coûtent quand même du calcul.' },
+  { id: 'tiers', name: 'Paliers',          usage: 3, rev: 3, charge: 3, tip: 'Plusieurs abonnements, du plus simple au plus complet. Chacun choisit selon son besoin : un compromis entre audience et revenus.' },
+  { id: 'meter', name: 'À l’usage',        usage: 2, rev: 4, charge: 2, tip: 'On paie en fonction de ce qu’on consomme. C’est juste pour les entreprises, mais cela freine les curieux.' },
+  { id: 'gratuit', name: 'Gratuit',        usage: 5, rev: 0, charge: 5, tip: 'Tout est gratuit. L’audience explose, mais chaque réponse coûte du calcul et rien ne rentre. Seul un financement extérieur peut tenir longtemps.' }
+];
+
+const DIFFS = {
+  closed: { name: 'Fermée', short: 'Fermée', tip: 'Le modèle reste chez vous : on l’utilise par vos produits. Vous gardez le contrôle et vous pouvez faire payer l’accès.' },
+  open:   { name: 'Poids ouverts', short: 'Ouverte', tip: 'Tout le monde peut télécharger le modèle. L’usage explose, mais vous ne pouvez plus faire payer l’accès, et les mauvais usages échappent à votre contrôle. Choix irréversible.' }
+};
+
+const PRODUCTS = {
+  chat:   { name: 'Chat',   icon: 'chat',   col: '#27b3ff', cost: 0,  load: 0, usage: 0,    flat: 0,  u: 3, r: 2, c: 2, risk: 0,
+            desc: 'Parler au modèle dans une fenêtre de discussion. Il s’ouvre tout seul avec votre premier modèle.',
+            req: [], tip: 'Le chat est la porte d’entrée : sans produit, un modèle n’a pas d’utilisateurs.' },
+  images: { name: 'Images', icon: 'image',  col: '#ff6fa5', cost: 10, load: 1, usage: 0.25, flat: 3,  u: 3, r: 2, c: 3, risk: 0.04,
+            desc: 'Créer et modifier des images à partir d’une phrase.',
+            req: [{ t: 'Modèle Moyen', f: S => S.tier >= 2 }, { t: 'Année 3 ou plus', f: S => S.year >= 3 }],
+            tip: 'Une image se génère en plusieurs étapes de calcul : elle coûte plus qu’une réponse en texte, et elle peut servir à fabriquer de faux contenus.' },
+  voice:  { name: 'Voix',   icon: 'mic',    col: '#ff9f1c', cost: 12, load: 2, usage: 0.3,  flat: 5,  u: 3, r: 2, c: 4, risk: 0,
+            desc: 'On parle au modèle et il répond à voix haute, sans attendre.',
+            req: [{ t: 'Modèle Moyen', f: S => S.tier >= 2 }, { t: '2 salles de calcul', f: S => roomsAll(S) >= 2 }],
+            tip: 'Savoir · Latence : pour qu’une conversation orale reste naturelle, la réponse doit arriver en moins d’une seconde. Cela réserve du calcul en permanence.' },
+  code:   { name: 'Code',   icon: 'code',   col: '#39c18a', cost: 8,  load: 1, usage: 0.2,  flat: 6,  u: 2, r: 3, c: 2, risk: 0,
+            desc: 'Un environnement où le modèle écrit, explique et corrige du code avec les équipes de développement.',
+            req: [{ t: 'Modèle Moyen', f: S => S.tier >= 2 }, { t: '2 personnes en ingénierie', f: S => S.E >= 2 }],
+            tip: 'Les équipes de développement utilisent le modèle tous les jours et acceptent de payer : c’est l’un des premiers usages rentables.' },
+  agents: { name: 'Agents', icon: 'robot',  col: '#ffd23f', cost: 20, load: 2, usage: 0.35, flat: 10, u: 4, r: 4, c: 4, risk: 0.08,
+            desc: 'Un assistant qui enchaîne des actions seul : chercher, écrire, réserver, exécuter du code.',
+            req: [{ t: 'Modèle Grand', f: S => S.tier >= 3 }, { t: '2 sceaux de test', f: S => S.seals >= 2 }],
+            tip: 'Un agent agit au lieu de répondre : une erreur a donc des conséquences réelles. C’est pourquoi il exige des modèles bien testés.' }
+};
+const PROD_ORDER = ['chat', 'images', 'voice', 'code', 'agents'];
+
+const PARTNERS = {
+  cursor: { name: 'Cursor', tag: 'Éditeur de code', years: 3, col: '#ff6fa5',
+    req: [{ t: 'Modèle Moyen', f: S => S.tier >= 2 }],
+    win: ['Des millions de personnes qui programment utilisent votre modèle.', 'Un revenu régulier chaque année.'],
+    lose: ['Exclusivité : aucun autre éditeur de code pendant 3 ans.', 'Leurs pannes deviennent un peu les vôtres.'],
+    chips: ['+ audience', '− exclusivité'], sav: 'code' },
+  ms: { name: 'Microsoft', tag: 'Cloud et grandes entreprises', years: 4, col: '#27b3ff',
+    req: [{ t: 'Un modèle', f: S => S.tier >= 1 }],
+    win: ['Deux salles de calcul de plus, sans les payer.', 'Des entreprises clientes déjà prêtes.'],
+    lose: ['Elle prend 15 % de vos revenus.', 'Vous ne pouvez plus ouvrir vos poids.'],
+    chips: ['+ calcul', '− indépendance'], sav: 'cloud' },
+  robots: { name: 'Robots', tag: 'Apprendre du monde physique', years: 3, col: '#39c18a',
+    req: [{ t: 'Modèle Moyen', f: S => S.tier >= 2 }],
+    win: ['Une donnée de plus chaque année.', 'Une amélioration du modèle à la fin du contrat.'],
+    lose: ['5 M$ par an de frais de terrain.', 'Les résultats arrivent lentement.'],
+    chips: ['+ données', '− lent'], sav: 'robots' },
+  sante: { name: 'Recherche médicale', tag: 'Fiabilité exigée', years: 3, col: '#ffd23f',
+    req: [{ t: 'Modèle Moyen', f: S => S.tier >= 2 }, { t: '2 sceaux de test', f: S => S.seals >= 2 }],
+    win: ['De la confiance : +1 chaque année pendant 2 ans.', 'Un revenu de 4 M$ par an.'],
+    lose: ['Un incident coûte 2 de confiance en plus.', 'Un incident rompt le contrat.'],
+    chips: ['+ confiance', '− exigeant'], sav: 'sante', need: 2 },
+  auto: { name: 'Constructeur automobile', tag: 'Conduite autonome', years: 3, col: '#ff9f1c',
+    req: [{ t: 'Modèle Grand', f: S => S.tier >= 3 }, { t: '3 sceaux de test', f: S => S.seals >= 3 }],
+    win: ['14 M$ par an.', 'Une donnée de plus chaque année.'],
+    lose: ['Un incident coûte 2 de confiance en plus.', 'Il exige un modèle bien testé.'],
+    chips: ['+ revenus', '− risque'], sav: 'auto', need: 3 }
+};
+const PART_ORDER = ['cursor', 'ms', 'robots', 'sante', 'auto'];
+
+/* Cartes opportunité (la main) */
+const OPPS = [
+  { id: 'lic',   t: 'Presse sous licence', d: 'Licences à −40 % cette année', z: 'Données' },
+  { id: 'build', t: 'Terrain disponible',  d: 'Construire une salle −35 %',   z: 'Calcul' },
+  { id: 'train', t: 'Crédit de calcul',    d: 'Entraîner −30 %',             z: 'Atelier' },
+  { id: 'test',  t: 'Équipe de test externe',   d: 'Un test gratuit',              z: 'Atelier' },
+  { id: 'hire',  t: 'Recrue recherche recommandée', d: 'Recruter en recherche, gratuit', z: 'Talents' },
+  { id: 'voice', t: 'Voix en direct',      d: 'Lancer la voix −35 %',         z: 'Marché' },
+  { id: 'cursor', t: 'Éditeur de code Cursor', d: '+6 M$ à la signature',   z: 'Marché' },
+  { id: 'open',  t: 'Poids ouverts',       d: 'Si vous ouvrez cette année : usage +30 %', z: 'Marché' }
+];
+const OPP_KEY = { lic: 'lic', build: 'build', train: 'train', test: 'test', hireR: 'hire', 'prod:voice': 'voice', 'part:cursor': 'cursor', mkt: 'open' };
+
+/* Savoirs */
+const SAVOIRS = {
+  params: { t: 'Paramètres', cat: 'Modèle',
+    quoi: 'Un modèle est un énorme tableau de nombres, les paramètres. Plus il en a, plus il retient de nuances, mais plus il coûte à entraîner et à faire tourner.',
+    jeu: 'Petit, Moyen, Grand, Frontière : chaque taille demande plus de données, de salles de calcul et de talents.',
+    reel: 'Les modèles actuels vont de quelques milliards à plusieurs centaines de milliards de paramètres.' },
+  echelle: { t: 'Loi d’échelle', cat: 'Modèle',
+    quoi: 'Un modèle progresse quand on augmente ses paramètres, ses données et son calcul en même temps. S’il manque un des trois, les deux autres sont en partie gaspillés.',
+    jeu: 'Les trois bocaux de la recette doivent atteindre leur ligne. Pour chaque manque, le dé de recherche perd 1.',
+    reel: 'Cette régularité observée sur des modèles de plus en plus gros a lancé la course à la taille.' },
+  donnees: { t: 'Données d’entraînement', cat: 'Données',
+    quoi: 'Un modèle apprend en lisant d’énormes quantités de textes, d’images ou de code. La qualité et la variété des données comptent autant que leur nombre.',
+    jeu: 'Chaque source remplit le bocal Données : web libre, licences ou synthèse.',
+    reel: 'Les données viennent du web, de livres, de dépôts de code et de contrats avec des maisons d’édition.' },
+  droitauteur: { t: 'Droit d’auteur', cat: 'Droit',
+    quoi: 'Certains textes d’entraînement sont protégés par le droit d’auteur. Les tribunaux n’ont pas encore tranché sur ce qu’un modèle a le droit de lire.',
+    jeu: 'Le web libre augmente vos chances de perdre au tribunal. Les licences coûtent, mais rassurent.',
+    reel: 'Des maisons d’édition, des autrices et auteurs et des journaux ont porté plainte contre des laboratoires, d’autres ont signé des accords de licence.' },
+  synth: { t: 'Données synthétiques', cat: 'Données',
+    quoi: 'Un modèle peut écrire lui-même des exemples d’entraînement. C’est rapide et peu coûteux, mais ces textes n’apportent rien de vraiment nouveau.',
+    jeu: 'La synthèse ajoute 1 donnée, mais il faut déjà un modèle. Trop d’usage fait perdre en qualité.',
+    reel: 'Les laboratoires l’utilisent surtout pour le code et les maths, où les réponses se vérifient.' },
+  collapse: { t: 'Effondrement de modèle', cat: 'Données',
+    quoi: 'Quand un modèle apprend surtout sur des textes produits par d’autres modèles, il perd peu à peu la variété du monde réel et ses réponses s’appauvrissent.',
+    jeu: 'Après 3 usages de la synthèse, la qualité de votre modèle baisse.',
+    reel: 'Des équipes de recherche ont montré cet effet en réentraînant des modèles sur des données générées, génération après génération.' },
+  puces: { t: 'Puces et GPU', cat: 'Calcul',
+    quoi: 'Entraîner un modèle demande des puces spécialisées, les GPU, regroupées dans des centres de données. Elles sont chères, rares, et chaque salle consomme beaucoup d’électricité.',
+    jeu: 'Construire une salle est permanent et coûte 18 M$. En louer une ne vaut que pour l’année.',
+    reel: 'Quelques entreprises seulement fabriquent ces puces. Les commandes des grands laboratoires se chiffrent en milliards de dollars.' },
+  inference: { t: 'Entraînement et inférence', cat: 'Calcul',
+    quoi: 'L’entraînement crée le modèle, une seule fois. L’inférence, c’est chaque réponse qu’il donne ensuite. Plus il a d’utilisateurs, plus l’inférence coûte.',
+    jeu: 'Les salles servent à deux choses : entraîner et répondre. Si elles sont toutes occupées à entraîner, vos serveurs saturent.',
+    reel: 'Pour les produits très utilisés, le coût de l’inférence finit par dépasser celui de l’entraînement.' },
+  latence: { t: 'Latence', cat: 'Produit',
+    quoi: 'Pour qu’une conversation orale reste naturelle, la réponse doit arriver en moins d’une seconde. Cela réserve du calcul en permanence.',
+    jeu: 'La voix occupe 2 salles de calcul chaque année.',
+    reel: 'Les assistants vocaux répondent en quelques centaines de millisecondes, au prix d’un calcul réservé à l’avance.' },
+  freemium: { t: 'Freemium', cat: 'Marché',
+    quoi: 'Une offre gratuite pour essayer, une offre payante pour aller plus loin. Elle attire beaucoup de monde, mais les personnes qui ne paient pas coûtent quand même du calcul.',
+    jeu: 'Plus l’offre est gratuite, plus l’usage monte, mais plus la charge augmente et plus les revenus baissent.',
+    reel: 'La plupart des assistants proposent un niveau gratuit limité et des abonnements mensuels.' },
+  ouverts: { t: 'Poids ouverts', cat: 'Diffusion',
+    quoi: 'Un modèle est un énorme tableau de nombres, ses « poids ». Les publier, c’est laisser n’importe qui télécharger le modèle, le faire tourner chez lui et le modifier.',
+    jeu: 'La porte « Poids ouverts » attire beaucoup d’usage. Elle rapporte moins d’argent : on ne peut plus vous faire payer l’accès au modèle.',
+    reel: 'Meta, Mistral ou DeepSeek publient des modèles ouverts. D’autres gardent les leurs fermés, en partie par crainte des mauvais usages : une fois publié, un modèle ne se retire plus.' },
+  eval: { t: 'Évaluation de sécurité', cat: 'Sécurité',
+    quoi: 'Avant de publier un modèle, des équipes tentent de le faire déraper : conseils dangereux, fuite de données, manipulation. Chaque test réussi rassure.',
+    jeu: 'Chaque sceau de test réduit le risque d’incident et débloque des produits et des contrats.',
+    reel: 'Les laboratoires publient des fiches de sécurité et font appel à des équipes de test externes avant les grandes sorties.' },
+  jailbreak: { t: 'Jailbreak', cat: 'Sécurité',
+    quoi: 'Un jailbreak est une astuce d’écriture qui pousse un modèle à contourner ses règles. Chaque correctif en appelle un autre : la sécurité est une course continue.',
+    jeu: 'Corriger mobilise une équipe, ignorer vous expose à un incident.',
+    reel: 'Des communautés entières partagent des jailbreaks quelques heures après la sortie d’un modèle.' },
+  hallu: { t: 'Hallucinations', cat: 'Sécurité',
+    quoi: 'Un modèle produit des réponses plausibles, pas forcément vraies. Il peut inventer une source ou un chiffre avec aplomb.',
+    jeu: 'Un modèle bien testé hallucine moins visiblement. Sans sceaux, la confiance baisse.',
+    reel: 'Des juristes ont été sanctionnés pour avoir cité des décisions de justice inventées par un assistant.' },
+  alignement: { t: 'Alignement', cat: 'Sécurité',
+    quoi: 'Aligner un modèle, c’est l’entraîner à suivre des consignes utiles et sûres, par exemple avec des retours humains notés. Un modèle brut n’a pas ces garde-fous.',
+    jeu: 'Avec 2 personnes en sécurité, un test rapporte 2 sceaux. Chacune réduit aussi le risque d’incident.',
+    reel: 'Les assistants grand public passent par une phase d’alignement après l’entraînement principal.' },
+  concurrence: { t: 'Concurrence', cat: 'Marché',
+    quoi: 'Les laboratoires s’imitent et se dépassent vite. Un modèle publié ouvert par un rival ôte à votre clientèle une raison de payer.',
+    jeu: 'Baisser vos prix attire du monde, mais réduit vos revenus.',
+    reel: 'Plusieurs modèles ouverts ont rattrapé en quelques mois des modèles fermés bien plus chers.' },
+  agents: { t: 'Agents', cat: 'Produit',
+    quoi: 'Un agent ne se contente pas de répondre : il enchaîne des actions, comme chercher, écrire du code ou réserver. Une erreur peut donc avoir des conséquences réelles.',
+    jeu: 'Les agents exigent 2 sceaux de test et augmentent le risque d’incident.',
+    reel: 'Les premiers agents naviguent sur le web, exécutent du code et manipulent des fichiers pour l’utilisateur.' },
+  code: { t: 'Assistants de code', cat: 'Produit',
+    quoi: 'Un modèle peut compléter, expliquer et corriger du code. Les équipes de développement s’en servent tous les jours, ce qui en fait l’un des premiers usages rentables.',
+    jeu: 'Cursor apporte beaucoup d’utilisateurs, mais vous êtes lié à lui pour 3 ans.',
+    reel: 'Des éditeurs de code intègrent des modèles de plusieurs laboratoires et en changent selon les prix.' },
+  cloud: { t: 'Cloud et partenariat', cat: 'Partenaires',
+    quoi: 'Un fournisseur de cloud peut offrir du calcul et de la clientèle en échange d’une part des revenus et d’une forme d’exclusivité.',
+    jeu: 'Microsoft vous donne 2 salles et de la clientèle, mais prend sa part et vous interdit les poids ouverts.',
+    reel: 'Des grands laboratoires ont signé avec des fournisseurs de cloud des partenariats de plusieurs milliards.' },
+  robots: { t: 'Robots et monde physique', cat: 'Partenaires',
+    quoi: 'Un robot doit comprendre l’espace, les objets et les gestes. Les données physiques sont rares et lentes à collecter, mais enrichissent le modèle.',
+    jeu: 'Le contrat donne 1 donnée par an et une amélioration à la fin.',
+    reel: 'Des laboratoires entraînent des modèles sur des vidéos et des mouvements de robots pour leur donner un sens du réel.' },
+  sante: { t: 'IA et santé', cat: 'Partenaires',
+    quoi: 'En médecine, une erreur coûte cher. Un modèle utile doit être testé sérieusement, et son usage reste supervisé par des professionnels.',
+    jeu: 'Ce contrat demande 2 sceaux et punit durement un incident.',
+    reel: 'Des modèles aident à lire des images, résumer des dossiers et chercher des molécules, toujours sous contrôle humain.' },
+  auto: { t: 'Conduite autonome', cat: 'Partenaires',
+    quoi: 'Une voiture autonome combine des capteurs et des modèles qui décident en temps réel. Dans la rue, les cas inhabituels comptent plus que la moyenne.',
+    jeu: '3 sceaux sont exigés. Le contrat rapporte beaucoup, mais tout incident coûte 2 de confiance.',
+    reel: 'Les essais sur route donnent de bons résultats habituels et des difficultés devant les situations rares.' },
+  deepfake: { t: 'Deepfakes', cat: 'Sécurité',
+    quoi: 'Un modèle d’images ou de voix peut imiter une personne réelle de façon convaincante. Les usages malveillants sont difficiles à empêcher une fois le modèle diffusé.',
+    jeu: 'Les produits images et les poids ouverts augmentent ce risque.',
+    reel: 'Des filigranes invisibles et des filtres existent, sans être infaillibles.' },
+  energie: { t: 'Énergie', cat: 'Calcul',
+    quoi: 'Un centre de données consomme autant d’électricité qu’une petite ville. L’énergie est devenue un coût et un sujet d’image pour les laboratoires.',
+    jeu: 'Plus vous avez de salles, plus votre facture et votre exposition montent.',
+    reel: 'Des laboratoires signent des contrats d’énergies renouvelables ou nucléaires pour alimenter leurs centres.' },
+  regulation: { t: 'Régulation', cat: 'Droit',
+    quoi: 'Des lois, comme le règlement européen sur l’IA, demandent plus de transparence aux modèles puissants, avec des obligations selon le niveau de risque.',
+    jeu: 'Un rapport coûte un peu mais rassure. Refuser fait baisser la confiance.',
+    reel: 'L’Union européenne, les États-Unis et d’autres pays imposent ou préparent des règles sur les modèles d’usage général.' }
+};
+const SAV_ORDER = Object.keys(SAVOIRS);
+/* ===== MOTEUR ===== */
+let RND = Math.random;
+const rnd = () => RND();
+const d6 = () => 1 + Math.floor(rnd() * 6);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const KNOWN = new Set();
+
+function unlock(S, id, silent) {
+  if (!SAVOIRS[id] || KNOWN.has(id)) return false;
+  KNOWN.add(id);
+  if (!silent) (S.newSav = S.newSav || []).push(id);
+  return true;
+}
+
+function newYr() {
+  return { growth: 1, rev: 1, dieBonus: 0, lockCalcul: false, teamsLost: 0, extraLoad: 0, trained: null, trainRooms: 0, openUsage: 1, powerBefore: 0 };
+}
+
+function newState() {
+  const S = {
+    year: 1, cash: 60, teams: 4, rooms: 1, rented: 0, data: 1, R: 1, E: 1, S: 0,
+    tier: 0, quality: 0, bonusP: 0, seals: 0, price: 'free', diff: 'closed',
+    products: { chat: false, images: false, voice: false, code: false, agents: false },
+    contracts: [], users: 0, conf: 3, plan: [], hand: [], webUses: 0, synthUses: 0, energy: 0,
+    yr: newYr(), over: null, usedEvents: [], ev: null, newSav: [], acts: [], die: null, recap: null, collapsed: false, history: []
+  };
+  drawHand(S);
+  return S;
+}
+
+const hasContract = (S, id) => S.contracts.some(c => c.id === id);
+const msRooms = S => (hasContract(S, 'ms') ? 2 : 0);
+const roomsAll = S => S.rooms + S.rented + msRooms(S);
+const power = S => (S.tier ? clamp(S.tier * 2 - 1 + S.quality + S.bonusP, 0, 10) : 0);
+const teamsTotal = S => Math.max(1, S.teams - S.yr.teamsLost);
+const teamsFree = S => teamsTotal(S) - S.plan.length;
+const priceOf = S => PRICES.find(p => p.id === S.price);
+const reserved = S => S.plan.reduce((a, p) => a + p.cost, 0);
+const planned = (S, k) => S.plan.find(x => x.k === k);
+const modelName = S => (S.tier ? SIZES[S.tier - 1].name : 'Aucun');
+
+function pawns(S) {
+  return { puis: power(S), conf: S.conf * 2, usage: Math.min(10, S.users / 2.5) };
+}
+
+/* ---------- Main : cartes opportunité ---------- */
+function drawHand(S) {
+  const ok = {
+    lic: () => true, build: () => S.rooms < ROOM_MAX, train: () => true,
+    test: () => S.tier >= 1, hire: () => true,
+    voice: () => S.tier >= 2 && !S.products.voice, cursor: () => S.tier >= 2 && !hasContract(S, 'cursor'),
+    open: () => S.diff === 'closed' && !hasContract(S, 'ms')
+  };
+  const pool = OPPS.filter(o => ok[o.id]());
+  const hand = [];
+  while (hand.length < 4 && pool.length) {
+    hand.push({ id: pool.splice(Math.floor(rnd() * pool.length), 1)[0].id, used: false });
+  }
+  S.hand = hand;
+}
+const OPP_MULT = { lic: 0.6, build: 0.65, train: 0.7, test: 0, hire: 0, voice: 0.65, cursor: 1, open: 1 };
+
+function oppFor(S, k, p) {
+  const id = OPP_KEY[k];
+  if (!id) return null;
+  if (k === 'mkt' && !(p && p.diff === 'open' && S.diff !== 'open')) return null;
+  return S.hand.find(h => h.id === id && !h.used) || null;
+}
+
+function costOf(S, k, p) {
+  let base = 0;
+  if (k === 'lic') base = 8;
+  else if (k === 'syn') base = 4;
+  else if (k === 'build') base = 18;
+  else if (k === 'rent') base = 6;
+  else if (k.startsWith('hire')) base = 4;
+  else if (k === 'test') base = 3;
+  else if (k === 'train') base = SIZES[p - 1].cost;
+  else if (k === 'mkt') base = 2;
+  else if (k.startsWith('prod:')) base = PRODUCTS[k.slice(5)].cost;
+  const o = oppFor(S, k, p);
+  return o ? Math.round(base * OPP_MULT[o.id]) : base;
+}
+
+/* ---------- Projection : état prévu une fois le plan joué ---------- */
+function proj(S) {
+  const q = { data: S.data, rooms: S.rooms, rent: S.rented, R: S.R, E: S.E, S: S.S };
+  S.plan.forEach(p => {
+    if (p.k === 'web' || p.k === 'syn') q.data += 1;
+    else if (p.k === 'lic') q.data += 2;
+    else if (p.k === 'build') q.rooms += 1;
+    else if (p.k === 'rent') q.rent += 1;
+    else if (p.k === 'hireR') q.R += 1;
+    else if (p.k === 'hireE') q.E += 1;
+    else if (p.k === 'hireS') q.S += 1;
+  });
+  q.data = Math.min(DATA_MAX, q.data);
+  q.roomsAll = q.rooms + q.rent + msRooms(S);
+  return q;
+}
+
+function trainInfo(S, sizeId) {
+  const sz = SIZES[sizeId - 1];
+  const q = proj(S);
+  const miss = {
+    data: Math.max(0, sz.data - q.data),
+    rooms: Math.max(0, sz.rooms - q.roomsAll),
+    talent: Math.max(0, sz.talent - (q.R + q.E))
+  };
+  const pen = miss.data + miss.rooms + miss.talent;
+  return { sz, q, miss, pen, bonus: Math.min(2, Math.floor(q.R / 2)) + S.yr.dieBonus };
+}
+
+/* ---------- Placement des équipes ---------- */
+function canPlace(S, k, p) {
+  if (planned(S, k)) return { ok: false, why: 'Cette équipe est déjà posée ici.' };
+  if (teamsFree(S) <= 0) return { ok: false, why: 'Plus aucune équipe libre.' };
+  const cost = costOf(S, k, p);
+  if (S.cash - reserved(S) < cost) return { ok: false, why: 'Pas assez d’argent pour ça.' };
+  const q = proj(S);
+  const no = why => ({ ok: false, why });
+  if (k === 'web' || k === 'lic') { if (q.data >= DATA_MAX) return no('Le bocal de données est plein.'); }
+  else if (k === 'syn') {
+    if (S.tier < 1) return no('Il faut déjà un modèle pour générer des données.');
+    if (q.data >= DATA_MAX) return no('Le bocal de données est plein.');
+  } else if (k === 'build') {
+    if (S.yr.lockCalcul) return no('Pénurie de puces : le calcul est bloqué cette année.');
+    if (q.rooms >= ROOM_MAX) return no('Cinq salles au maximum.');
+  } else if (k === 'rent') {
+    if (S.yr.lockCalcul) return no('Pénurie de puces : le calcul est bloqué cette année.');
+    if (q.rent >= 3) return no('Trois salles louées au maximum.');
+  } else if (k.startsWith('hire')) {
+    const f = k.slice(4);
+    if (q[f] >= TALENT_MAX) return no('Cinq personnes au maximum dans ce métier.');
+  } else if (k === 'test') {
+    if (S.tier < 1 && !S.plan.some(x => x.k === 'train')) return no('Il faut un modèle à tester.');
+    if (S.seals >= SEAL_MAX) return no('Votre modèle a déjà tous ses sceaux.');
+  } else if (k === 'train') {
+    const sz = SIZES[p - 1];
+    if (sz.unlock && S.year < sz.unlock) return no('Cette taille se débloque à l’année ' + sz.unlock + '.');
+    if (p < S.tier) return no('Votre modèle actuel est déjà plus gros.');
+  } else if (k === 'mkt') {
+    if (S.price === p.price && S.diff === p.diff) return no('Rien ne change par rapport à aujourd’hui.');
+    if (S.diff === 'open' && p.diff === 'closed') return no('Un modèle publié ne se retire plus.');
+    if (p.diff === 'open' && hasContract(S, 'ms')) return no('Microsoft vous interdit les poids ouverts.');
+  } else if (k.startsWith('prod:')) {
+    const id = k.slice(5), pd = PRODUCTS[id];
+    if (S.products[id]) return no('Ce produit est déjà en ligne.');
+    const miss = pd.req.find(r => !r.f(S));
+    if (miss) return no('Il manque : ' + miss.t + '.');
+  } else if (k.startsWith('part:')) {
+    const id = k.slice(5), pt = PARTNERS[id];
+    if (hasContract(S, id)) return no('Ce contrat est déjà signé.');
+    const slots = S.contracts.length + S.plan.filter(x => x.k.startsWith('part:')).length;
+    if (slots >= 2) return no('Deux contrats au maximum.');
+    const miss = pt.req.find(r => !r.f(S));
+    if (miss) return no('Il manque : ' + miss.t + '.');
+    if (id === 'ms' && S.diff === 'open') return no('Vos poids sont ouverts : Microsoft refuse.');
+    if (id === 'ms' && S.plan.some(x => x.k === 'mkt' && x.p.diff === 'open')) return no('Vous prévoyez d’ouvrir vos poids : Microsoft refuse.');
+  }
+  return { ok: true, cost };
+}
+
+function place(S, k, p) {
+  const r = canPlace(S, k, p);
+  if (!r.ok) return r;
+  const o = oppFor(S, k, p);
+  if (o) o.used = true;
+  S.plan.push({ k, p, cost: r.cost, opp: o ? o.id : null });
+  return r;
+}
+
+function unplace(S, k) {
+  const i = S.plan.findIndex(x => x.k === k);
+  if (i < 0) return;
+  const it = S.plan[i];
+  if (it.opp) { const h = S.hand.find(h => h.id === it.opp); if (h) h.used = false; }
+  S.plan.splice(i, 1);
+  // Retirer ce qui ne tient plus sans lui
+  if (k === 'mkt') S.plan.filter(x => x.k === 'part:ms').forEach(() => {});
+}
+
+/* ---------- Lancer l'année ---------- */
+const RANK = k => ['web', 'lic', 'syn', 'build', 'rent', 'hireR', 'hireE', 'hireS', 'mkt'].indexOf(k) >= 0
+  ? ['web', 'lic', 'syn', 'build', 'rent', 'hireR', 'hireE', 'hireS', 'mkt'].indexOf(k)
+  : k.startsWith('prod:') ? 20 : k.startsWith('part:') ? 30 : k === 'train' ? 40 : 50;
+
+function resolve(S) {
+  const acts = [];
+  let die = null;
+  const total = reserved(S);
+  S.cash -= total;
+  S.yr.powerBefore = power(S);
+  const items = [...S.plan].sort((a, b) => RANK(a.k) - RANK(b.k));
+  items.forEach(it => {
+    const k = it.k, p = it.p;
+    const add = (title, detail, icon, tone) => acts.push({ k, title, detail, icon, tone: tone || 'pos', cost: it.cost });
+    if (k === 'web') {
+      S.data = Math.min(DATA_MAX, S.data + 1); S.webUses++; unlock(S, 'donnees');
+      add('Web libre', '+1 donnée. Gratuit, mais des autrices et auteurs pourraient s’en plaindre.', 'globe');
+    } else if (k === 'lic') {
+      S.data = Math.min(DATA_MAX, S.data + 2); S.webUses = Math.max(0, S.webUses - 1); unlock(S, 'donnees');
+      add('Licences', '+2 données, sous contrat avec des maisons d’édition.', 'doc');
+    } else if (k === 'syn') {
+      S.data = Math.min(DATA_MAX, S.data + 1); S.synthUses++; unlock(S, 'synth');
+      add('Synthèse', '+1 donnée, écrite par votre propre modèle.', 'spark');
+      if (S.synthUses >= 3 && !S.collapsed) {
+        S.collapsed = true; unlock(S, 'collapse');
+        if (S.quality > 0) S.quality--; else S.bonusP = Math.max(-1, S.bonusP - 1);
+        acts.push({ k, title: 'Effondrement', detail: 'Trop de données synthétiques : la qualité du modèle baisse.', icon: 'spark', tone: 'neg', cost: 0 });
+      }
+    } else if (k === 'build') {
+      S.rooms++; unlock(S, 'puces');
+      add('Nouvelle salle', '+1 salle de calcul, pour toujours.', 'server');
+    } else if (k === 'rent') {
+      S.rented++; unlock(S, 'puces');
+      add('Salle louée', '+1 salle de calcul, cette année seulement.', 'clock');
+    } else if (k.startsWith('hire')) {
+      const f = k.slice(4);
+      S[f]++;
+      const nm = { R: 'Recherche', E: 'Ingénierie', S: 'Sécurité' }[f];
+      if (f === 'S') unlock(S, 'alignement');
+      add(nm + ' : nouvelle recrue', f === 'R' ? 'Le dé de recherche s’améliore.' : f === 'E' ? 'Vos produits et vos modèles avancent mieux.' : 'Les tests rapportent plus et les incidents baissent.', f === 'R' ? 'flask' : f === 'E' ? 'gear' : 'shield');
+    } else if (k === 'mkt') {
+      const wasOpen = S.diff === 'open';
+      S.price = p.price; S.diff = p.diff;
+      unlock(S, 'freemium');
+      if (p.diff === 'open' && !wasOpen) {
+        unlock(S, 'ouverts');
+        if (it.opp === 'open') S.yr.openUsage = 1.3;
+        if (S.seals >= 2) { S.conf = clamp(S.conf + 1, 0, 5); add('Poids ouverts', 'Votre modèle est publié. Bien testé, il inspire confiance : +1.', 'unlock'); }
+        else add('Poids ouverts', 'Votre modèle est publié. Non testé, il inquiète une partie du public.', 'unlock', 'neg');
+      } else add('Prix : ' + PRICES.find(x => x.id === p.price).name, 'Nouvelle offre sur le marché.', 'coin');
+    } else if (k.startsWith('prod:')) {
+      const id = k.slice(5);
+      S.products[id] = true;
+      if (id === 'voice') unlock(S, 'latence');
+      if (id === 'code') unlock(S, 'code');
+      if (id === 'agents') unlock(S, 'agents');
+      add(PRODUCTS[id].name + ' en ligne', PRODUCTS[id].desc, PRODUCTS[id].icon);
+    } else if (k.startsWith('part:')) {
+      const id = k.slice(5), pt = PARTNERS[id];
+      S.contracts.push({ id, left: pt.years, age: 0 });
+      unlock(S, pt.sav);
+      if (id === 'cursor' && it.opp === 'cursor') S.cash += 6;
+      add('Contrat ' + pt.name, pt.win[0], 'handshake');
+    } else if (k === 'train') {
+      
+      // recalcul sur l'état réel (les actions précédentes sont appliquées)
+      const sz = SIZES[p - 1];
+      const miss = {
+        data: Math.max(0, sz.data - S.data),
+        rooms: Math.max(0, sz.rooms - roomsAll(S)),
+        talent: Math.max(0, sz.talent - (S.R + S.E))
+      };
+      const pen = miss.data + miss.rooms + miss.talent;
+      const bonus = Math.min(2, Math.floor(S.R / 2)) + S.yr.dieBonus;
+      const roll = d6();
+      const totalRoll = roll + bonus - pen;
+      const outcome = totalRoll <= 1 ? 'fail' : totalRoll <= 3 ? 'ok' : totalRoll <= 5 ? 'good' : 'great';
+      die = { size: p, roll, bonus, pen, miss, total: totalRoll, outcome, cost: it.cost };
+      S.yr.trainRooms = Math.min(sz.rooms, Math.max(0, roomsAll(S) - 1));
+      unlock(S, 'params'); unlock(S, 'echelle');
+      if (outcome === 'fail') {
+        S.yr.trained = { size: p, outcome };
+        add('Entraînement raté', 'Le modèle ' + sz.name + ' n’a pas convergé. L’argent est perdu.', 'hex', 'neg');
+      } else {
+        const q = { ok: 0, good: 1, great: 2 }[outcome];
+        if (p > S.tier) { S.tier = p; S.quality = q; S.seals = 0; S.bonusP = 0; S.collapsed = false; S.synthUses = Math.min(S.synthUses, 2); }
+        else S.quality = Math.max(S.quality, q);
+        S.products.chat = true;
+        S.yr.trained = { size: p, outcome };
+        add('Modèle ' + sz.name + ' entraîné', { ok: 'Résultat correct.', good: 'Bon résultat.', great: 'Percée : le modèle dépasse les attentes.' }[outcome], 'hex');
+      }
+    } else if (k === 'test') {
+      const g = S.S >= 2 ? 2 : 1;
+      S.seals = Math.min(SEAL_MAX, S.seals + g);
+      unlock(S, 'eval');
+      add('Tests de sécurité', '+' + g + ' sceau' + (g > 1 ? 'x' : '') + ' pour le modèle ' + modelName(S) + '.', 'shield');
+    }
+  });
+  S.plan = [];
+  S.acts = acts;
+  S.die = die;
+  return { acts, die };
+}
+
+/* ---------- Fin d'année ---------- */
+function fixedCosts(S) {
+  const sal = (S.R + S.E + S.S) * 2;
+  const up = S.rooms * 3 * (S.energy ? 1.5 : 1);
+  const partner = hasContract(S, 'robots') ? 5 : 0;
+  return { sal, up, partner, total: sal + up + partner };
+}
+
+const fmt = (n, d = 1) => (Math.round(n * Math.pow(10, d)) / Math.pow(10, d)).toFixed(d).replace('.', ',').replace(/,0+$/, '');
+const sgn = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n));
+
+const PRICE_WHY = {
+  pay: 'Peu de monde, mais chaque personne rapporte beaucoup.',
+  free: 'Beaucoup d’essais gratuits, peu de personnes qui paient.',
+  tiers: 'Un bon équilibre entre audience et revenus.',
+  meter: 'Les entreprises paient au plus juste, les curieux restent à l’écart.',
+  gratuit: 'Tout le monde vient, mais rien ne rentre.'
+};
+
+function endYear(S) {
+  const before = { cash: S.cash, P: power(S), conf: S.conf, U: S.users };
+  const pr = priceOf(S), open = S.diff === 'open';
+  const P = power(S);
+  const lines = [];
+
+  // Croissance
+  let newU = 0;
+  if (S.tier > 0) {
+    const prodMult = 1 + PROD_ORDER.filter(x => S.products[x]).reduce((a, x) => a + PRODUCTS[x].usage, 0);
+    newU = (0.5 + 0.55 * P) * (pr.usage / 3) * prodMult * (open ? 1.8 * S.yr.openUsage : 1)
+      * (0.4 + 0.12 * S.conf) * S.yr.growth * (0.88 + 0.24 * rnd()) * Math.max(0.15, 1 - S.users / 40);
+    if (hasContract(S, 'cursor')) newU += 0.8;
+  }
+  let U1 = S.users * 0.88 + newU;
+
+  // Charge de calcul
+  const prodLoad = PROD_ORDER.filter(x => S.products[x]).reduce((a, x) => a + PRODUCTS[x].load, 0);
+  const load = S.tier > 0 ? U1 * (0.5 + 0.1 * pr.charge) + prodLoad + S.yr.extraLoad : 0;
+  const cap = Math.max(0, roomsAll(S) - S.yr.trainRooms) * 4;
+  const sat = S.tier > 0 && load > cap + 0.001;
+  if (sat) U1 *= 0.92;
+
+  // Recettes
+  const msShare = hasContract(S, 'ms') ? 0.85 : 1;
+  let rev = U1 * pr.rev * 2.2 * (open ? 0.35 : 1) * S.yr.rev * (sat ? 0.8 : 1) * msShare;
+  const flat = PROD_ORDER.filter(x => S.products[x]).reduce((a, x) => a + PRODUCTS[x].flat, 0) * Math.min(1, U1 / 2) * (sat ? 0.8 : 1);
+  rev += flat;
+  if (hasContract(S, 'cursor')) rev += 5;
+  if (hasContract(S, 'ms')) rev += 6;
+  if (hasContract(S, 'sante')) rev += 4;
+  if (hasContract(S, 'auto')) rev += 14;
+
+  // Charges
+  const fc = fixedCosts(S);
+  const serve = load * 0.9;
+  const costs = fc.total + serve;
+
+  // Incident
+  let p = 0;
+  if (S.tier > 0 && U1 > 0.3) {
+    const prodRisk = PROD_ORDER.filter(x => S.products[x]).reduce((a, x) => a + PRODUCTS[x].risk, 0);
+    p = clamp(0.08 + 0.09 * Math.max(0, S.tier - S.seals) + (open ? 0.1 : 0) + prodRisk - 0.03 * S.S, 0.03, 0.75);
+  }
+  const incident = p > 0 && rnd() < p;
+
+  // Confiance
+  let dc = 0, dcI = 0, dcS = 0, brokeSante = false;
+  if (incident) {
+    dcI -= S.tier >= 3 ? 2 : 1;
+    if (hasContract(S, 'sante')) { dcI -= 2; brokeSante = true; }
+    if (hasContract(S, 'auto')) dcI -= 2;
+  }
+  if (sat) { dcS -= 1; if (hasContract(S, 'cursor')) dcS -= 1; }
+  if (S.tier > 0 && !incident && !sat && S.seals >= Math.min(S.tier, 3)) dcI += 1;
+  const sc = S.contracts.find(c => c.id === 'sante');
+  if (sc && sc.age < 2 && !brokeSante) dcI += 1;
+  dc = dcI + dcS;
+
+  // Application
+  S.users = Math.round(U1 * 1000) / 1000;
+  S.cash = S.cash + rev - costs;
+  S.conf = clamp(S.conf + dc, 0, 5);
+
+  // Contrats : données, échéances
+  const endNotes = [];
+  S.contracts.forEach(c => {
+    if (c.id === 'robots' || c.id === 'auto') S.data = Math.min(DATA_MAX, S.data + 1);
+    c.left--; c.age++;
+    if (c.left <= 0 || (c.id === 'sante' && brokeSante)) {
+      c.done = true;
+      if (c.id === 'robots' && c.left <= 0) { S.bonusP = Math.min(2, S.bonusP + 1); endNotes.push('Fin du contrat Robots : votre modèle progresse de 1.'); }
+      else endNotes.push(brokeSante && c.id === 'sante' ? 'Le contrat de recherche médicale est rompu.' : 'Le contrat ' + PARTNERS[c.id].name + ' se termine.');
+    }
+  });
+  S.contracts = S.contracts.filter(c => !c.done);
+  S.energy = 0;
+
+  const after = { cash: S.cash, P: power(S), conf: S.conf, U: S.users };
+  const d = { cash: after.cash - before.cash, P: after.P - before.P, conf: after.conf - before.conf, U: after.U - before.U };
+  const pw = pawns(S);
+
+  // Récapitulatif : cause → effet
+  const tr = S.yr.trained;
+  if (tr) {
+    const sz = SIZES[tr.size - 1];
+    lines.push({
+      from: 'Entraînement du modèle ' + sz.name + (S.die ? ' (dé ' + S.die.roll + (S.die.total !== S.die.roll ? ', total ' + S.die.total : '') + ')' : ''),
+      to: tr.outcome === 'fail' ? 'Le dé a donné « Raté » : le modèle n’a pas convergé.' : tr.outcome === 'great' ? 'Percée : le modèle est nettement plus capable.' : tr.outcome === 'good' ? 'Le dé a donné « Bon » : le modèle est plus capable.' : 'Le dé a donné « Correct » : le modèle est fonctionnel.',
+      stat: d.P ? 'Puissance ' + (d.P > 0 ? '+' : '−') + Math.abs(d.P) : 'Puissance =', tone: tr.outcome === 'fail' ? 'neg' : 'pos'
+    });
+  }
+  if (S.tier === 0) {
+    lines.push({ from: 'Aucun modèle en service', to: 'Sans modèle, personne ne vous utilise. Entraînez-en un.', stat: 'Usage =', tone: 'neg' });
+  } else {
+    lines.push({
+      from: 'Prix ' + pr.name + (open ? ' · poids ouverts' : ''),
+      to: PRICE_WHY[pr.id] + (open ? ' Les poids ouverts attirent la communauté, mais on ne vous paie plus l’accès.' : ''),
+      stat: 'Usage ' + (d.U >= 0 ? '+' : '−') + fmt(Math.abs(d.U)) + ' M', tone: d.U >= 0 ? 'pos' : 'neg'
+    });
+  }
+  if (S.tier > 0) {
+    lines.push({
+      from: S.yr.trainRooms ? 'Entraînement : ' + S.yr.trainRooms + ' salle' + (S.yr.trainRooms > 1 ? 's' : '') + ' occupée' + (S.yr.trainRooms > 1 ? 's' : '') + ' · charge ' + fmt(load, 0) + ' pour ' + fmt(cap, 0) : 'Charge ' + fmt(load, 0) + ' pour ' + fmt(cap, 0) + ' de capacité',
+      to: sat ? 'Serveurs saturés : une partie du public repart et les revenus baissent.' : load > cap * 0.8 ? 'Les serveurs tiennent, mais de justesse.' : 'Les serveurs tiennent sans effort.',
+      stat: dcS ? 'Confiance −' + Math.abs(dcS) : 'Confiance =', tone: sat ? 'neg' : 'pos'
+    });
+    lines.push({
+      from: 'Risque d’incident ' + Math.round(p * 100) + ' % · ' + S.seals + ' sceau' + (S.seals > 1 ? 'x' : '') + ' sur ' + Math.min(S.tier, 3),
+      to: incident ? (brokeSante ? 'Un incident grave : le contrat médical est rompu.' : 'Quelqu’un a détourné votre modèle.') : (S.seals >= Math.min(S.tier, 3) ? 'Aucun incident : le public vous fait confiance.' : 'Aucun incident cette fois, mais le risque reste élevé.'),
+      stat: dcI ? 'Confiance ' + (dcI > 0 ? '+' : '−') + Math.abs(dcI) : 'Confiance =', tone: incident ? 'neg' : 'pos', extra: true
+    });
+  }
+  lines.push({
+    from: 'Recettes ' + fmt(rev, 0) + ' M$ · charges ' + fmt(costs, 0) + ' M$',
+    to: 'Salaires ' + fmt(fc.sal, 0) + ', salles ' + fmt(fc.up, 0) + ', réponses au public ' + fmt(serve, 0) + (fc.partner ? ', terrain ' + fc.partner : '') + '.',
+    stat: 'Argent ' + (d.cash >= 0 ? '+' : '−') + fmt(Math.abs(d.cash), 0) + ' M$', tone: d.cash >= 0 ? 'pos' : 'neg'
+  });
+  endNotes.forEach(t => lines.push({ from: 'Contrats', to: t, stat: '', tone: 'pos' }));
+
+  unlock(S, 'inference');
+  S.history.push({ year: S.year, ...pw });
+
+  const rec = {
+    year: S.year, lines, before: { puis: before.P, conf: before.conf * 2, usage: Math.min(10, before.U / 2.5) }, after: pw,
+    d, rev, costs, sat, incident, p, load, cap
+  };
+  S.recap = rec;
+
+  // Fin de partie ?
+  if (S.cash < 0) S.over = 'bankrupt';
+  else if (S.year >= 5 && pw.puis >= SEUIL && pw.conf >= SEUIL && pw.usage >= SEUIL) S.over = 'win';
+  else if (S.year >= MAXY) S.over = 'end';
+  return rec;
+}
+
+function nextYear(S) {
+  S.year++;
+  S.yr = newYr();
+  S.plan = [];
+  S.acts = []; S.die = null; S.recap = null;
+  if ((S.year === 4 || S.year === 7) && S.teams < 6) S.teams++;
+  drawHand(S);
+  S.ev = drawEvent(S);
+}
+
+/* ---------- Actualités ---------- */
+const ev = (o) => o;
+const EVENTS = [
+  ev({ id: 'auteurs', icon: 'scales', tag: 'Droit', title: 'Des autrices et auteurs portent plainte', sav: 'droitauteur',
+    text: 'Des autrices, des auteurs et des maisons d’édition affirment que votre modèle a appris dans leurs livres, sans leur accord.',
+    why: 'Un modèle apprend sur d’énormes quantités de textes. Certains sont protégés par le droit d’auteur : la loi n’a pas encore tranché.',
+    cond: S => S.year >= 2 && S.tier >= 1,
+    a: { t: 'Signer des licences', cost: 10, b: [['coin', 'Coûte 10 M$'], ['shield', 'Confiance +1']],
+      run: S => { S.cash -= 10; S.conf = clamp(S.conf + 1, 0, 5); S.webUses = 0; return 'La plainte est retirée. Vos sources sont désormais sous licence.'; } },
+    b: { t: 'Plaider l’usage équitable', die: true, need: S => (S.webUses >= 2 ? 5 : 4), b: [['die', 'Lancer le dé'], ['text', 'Gratuit si vous gagnez, amende si vous perdez']],
+      run: (S, r) => { const n = (S.webUses >= 2 ? 5 : 4); if (r >= n) return 'Le juge vous donne raison, cette fois.'; S.cash -= 12; S.conf = clamp(S.conf - 1, 0, 5); return 'Vous perdez : 12 M$ d’amende et la confiance baisse.'; } } }),
+  ev({ id: 'puces', icon: 'chip', tag: 'Calcul', title: 'Pénurie de puces', sav: 'puces',
+    text: 'Les fabricants sont débordés : vos commandes de GPU arrivent avec des mois de retard.',
+    why: 'Peu d’entreprises fabriquent des puces d’IA, et leurs usines tournent déjà à plein.',
+    cond: S => S.year >= 2,
+    a: { t: 'Payer le prix fort', cost: 8, b: [['coin', 'Coûte 8 M$'], ['text', 'Le calcul reste disponible']], run: S => { S.cash -= 8; return 'Vous obtenez vos puces à temps, au prix fort.'; } },
+    b: { t: 'Attendre', b: [['lock', 'Construire et louer bloqués cette année'], ['text', 'Rien à payer']], run: S => { S.yr.lockCalcul = true; return 'Vous attendez : pas de nouvelle salle cette année.'; } } }),
+  ev({ id: 'rival', icon: 'rival', tag: 'Concurrence', title: 'Un laboratoire rival publie un modèle ouvert', sav: 'concurrence',
+    text: 'Un laboratoire concurrent met en ligne un modèle gratuit, que tout le monde peut télécharger. Votre clientèle compare.',
+    why: 'Quand un modèle ouvert se rapproche d’un modèle payant, la raison de payer s’affaiblit.',
+    cond: S => S.tier >= 1 && S.users > 0.5,
+    a: { t: 'Baisser vos prix', b: [['up', 'Croissance +30 % cette année'], ['down', 'Revenus −20 %']], run: S => { S.yr.growth *= 1.3; S.yr.rev *= 0.8; return 'Vous gardez votre clientèle, au prix d’une marge réduite.'; } },
+    b: { t: 'Accélérer la recherche', cost: 6, b: [['coin', 'Coûte 6 M$'], ['die', 'Dé de recherche +1 cette année']], run: S => { S.cash -= 6; S.yr.dieBonus += 1; return 'Votre équipe de recherche passe la vitesse supérieure.'; } } }),
+  ev({ id: 'jailbreak', icon: 'key', tag: 'Sécurité', title: 'Un jailbreak circule en ligne', sav: 'jailbreak',
+    text: 'Un message astucieux fait contourner les règles de votre modèle. Il est déjà partagé partout.',
+    why: 'Chaque correctif en appelle un autre : la sécurité est une course continue.',
+    cond: S => S.tier >= 1,
+    a: { t: 'Corriger tout de suite', b: [['person', 'Une équipe de moins cette année'], ['shield', 'Aucun risque']], run: S => { S.yr.teamsLost += 1; return 'Le trou est bouché, mais une équipe y a passé l’année.'; } },
+    b: { t: 'Ignorer', die: true, need: S => Math.max(2, 4 - S.S), b: [['die', 'Lancer le dé'], ['text', 'Raté : Confiance −2']],
+      run: (S, r) => { const n = Math.max(2, 4 - S.S); if (r >= n) return 'Le jailbreak fait peu de dégâts, cette fois.'; S.conf = clamp(S.conf - 2, 0, 5); return 'Le jailbreak fait la une : la confiance chute.'; } } }),
+  ev({ id: 'hallu', icon: 'doc', tag: 'Fiabilité', title: 'Une réponse fausse fait le tour du web', sav: 'hallu',
+    text: 'Votre modèle a inventé une source, et un journal l’a citée. Les captures d’écran circulent.',
+    why: 'Un modèle produit des réponses plausibles, pas forcément vraies.',
+    cond: S => S.tier >= 1 && S.users > 0.5,
+    a: { t: 'Afficher des avertissements', cost: 2, b: [['coin', 'Coûte 2 M$'], ['shield', 'Aucune perte']], run: S => { S.cash -= 2; return 'Un bandeau d’avertissement calme le débat.'; } },
+    b: { t: 'Ne rien dire', b: [['shield', 'Rien si 2 sceaux ou plus'], ['down', 'Sinon Confiance −1']], run: S => { if (S.seals >= 2) return 'Votre modèle est bien testé : l’affaire passe inaperçue.'; S.conf = clamp(S.conf - 1, 0, 5); return 'Le silence agace : la confiance baisse.'; } } }),
+  ev({ id: 'regul', icon: 'flag', tag: 'Régulation', title: 'Le régulateur demande des comptes', sav: 'regulation',
+    text: 'Une autorité demande un rapport sur les données et les tests de votre modèle.',
+    why: 'Des lois sur l’IA exigent plus de transparence des modèles les plus puissants.',
+    cond: S => S.tier >= 2,
+    a: { t: 'Publier un rapport', cost: 3, b: [['coin', 'Coûte 3 M$'], ['shield', 'Confiance +1 avec 1 sceau ou plus']], run: S => { S.cash -= 3; if (S.seals >= 1) { S.conf = clamp(S.conf + 1, 0, 5); return 'Le rapport rassure : vos tests parlent pour vous.'; } return 'Le rapport est mince : personne n’est impressionné.'; } },
+    b: { t: 'Refuser', b: [['down', 'Confiance −1']], run: S => { S.conf = clamp(S.conf - 1, 0, 5); return 'Le refus fait mauvais effet.'; } } }),
+  ev({ id: 'viral', icon: 'bolt', tag: 'Charge', title: 'Votre modèle devient viral', sav: 'inference',
+    text: 'Une vidéo montre votre produit en action. Des millions de curieux arrivent d’un coup.',
+    why: 'L’inférence se paie à chaque réponse : une foule soudaine peut saturer les serveurs.',
+    cond: S => S.tier >= 1 && S.users >= 1,
+    a: { t: 'Limiter l’accès', b: [['down', 'Croissance −20 % cette année'], ['shield', 'Serveurs protégés']], run: S => { S.yr.growth *= 0.8; return 'Une file d’attente protège vos serveurs.'; } },
+    b: { t: 'Tout laisser ouvert', b: [['up', 'Croissance +40 % cette année'], ['server', 'Charge +3 cette année']], run: S => { S.yr.growth *= 1.4; S.yr.extraLoad += 3; return 'Tout le monde entre. Vos serveurs vont souffrir.'; } } }),
+  ev({ id: 'depart', icon: 'person', tag: 'Talents', title: 'Une figure de la recherche est débauchée', sav: null,
+    text: 'Une entreprise concurrente lui offre deux fois son salaire. La personne hésite encore.',
+    why: 'Les meilleurs profils de la recherche sont rares et très courtisés.',
+    cond: S => S.R >= 2,
+    a: { t: 'Faire une contre-offre', cost: 6, b: [['coin', 'Coûte 6 M$'], ['person', 'Vous gardez tout le monde']], run: S => { S.cash -= 6; return 'La personne reste, avec une belle augmentation.'; } },
+    b: { t: 'Accepter son départ', b: [['down', 'Un poste de recherche en moins']], run: S => { S.R = Math.max(0, S.R - 1); return 'Cette personne rejoint un rival. Il faudra recruter.'; } } }),
+  ev({ id: 'invest', icon: 'coin', tag: 'Financement', title: 'Un fonds d’investissement frappe à la porte', sav: null,
+    text: 'Un fonds propose 40 M$ tout de suite, en échange d’une promesse de croissance rapide.',
+    why: 'Entraîner de gros modèles coûte des centaines de millions : les laboratoires lèvent des fonds régulièrement.',
+    cond: S => S.year >= 3,
+    a: { t: 'Accepter', b: [['coin', '+40 M$ tout de suite'], ['down', 'Confiance −1 (pression de rentabilité)']], run: S => { S.cash += 40; S.conf = clamp(S.conf - 1, 0, 5); return 'Les 40 M$ arrivent. Les attentes aussi.'; } },
+    b: { t: 'Refuser', b: [['shield', 'Vous gardez votre indépendance']], run: S => 'Vous gardez les mains libres, et un budget plus serré.' } }),
+  ev({ id: 'deepfake', icon: 'mask', tag: 'Mésusage', title: 'Un deepfake utilise votre modèle', sav: 'deepfake',
+    text: 'Une fausse vidéo d’une personnalité circule. Elle a été fabriquée avec votre technologie.',
+    why: 'Les modèles d’images et de voix peuvent imiter des personnes réelles de façon convaincante.',
+    cond: S => S.products.images || S.diff === 'open',
+    a: { t: 'Filigrane et filtres', cost: 4, b: [['coin', 'Coûte 4 M$'], ['shield', 'Confiance +1 si une personne en sécurité']], run: S => { S.cash -= 4; if (S.S >= 1) { S.conf = clamp(S.conf + 1, 0, 5); return 'Votre équipe sécurité réagit vite : la confiance remonte.'; } return 'Les filtres limitent les dégâts.'; } },
+    b: { t: 'Laisser faire', b: [['down', 'Confiance −2 (−3 en poids ouverts)']], run: S => { S.conf = clamp(S.conf - (S.diff === 'open' ? 3 : 2), 0, 5); return 'L’affaire éclate : la confiance s’effondre.'; } } }),
+  ev({ id: 'energie', icon: 'leaf', tag: 'Énergie', title: 'Votre facture d’électricité fait la une', sav: 'energie',
+    text: 'Un journal compare la consommation de vos salles à celle d’une ville de 100 000 habitants.',
+    why: 'Un centre de données consomme énormément d’électricité. L’énergie est un coût et un sujet d’image.',
+    cond: S => S.rooms >= 2,
+    a: { t: 'Énergie renouvelable', cost: 6, b: [['coin', 'Coûte 6 M$'], ['shield', 'Confiance +1']], run: S => { S.cash -= 6; S.conf = clamp(S.conf + 1, 0, 5); return 'Un contrat d’énergie verte calme la presse.'; } },
+    b: { t: 'Ignorer', b: [['down', 'Électricité +50 % cette année']], run: S => { S.energy = 1; return 'Les prix grimpent : la facture aussi.'; } } }),
+  ev({ id: 'pollue', icon: 'spark', tag: 'Données', title: 'Vos données sont polluées', sav: 'collapse',
+    text: 'Votre équipe de recherche repère beaucoup de textes écrits par des modèles dans vos données d’entraînement.',
+    why: 'Quand un modèle apprend surtout sur des textes de modèles, il perd la variété du monde réel.',
+    cond: S => S.synthUses >= 1 && S.tier >= 1,
+    a: { t: 'Nettoyer les données', cost: 5, b: [['coin', 'Coûte 5 M$'], ['shield', 'Remet la synthèse à zéro']], run: S => { S.cash -= 5; S.synthUses = 0; S.collapsed = false; return 'Vos données sont de nouveau saines.'; } },
+    b: { t: 'Ignorer', b: [['down', 'Qualité du modèle −1']], run: S => { if (S.quality > 0) S.quality--; else S.conf = clamp(S.conf - 1, 0, 5); return 'Le modèle devient plus fade.'; } } }),
+  ev({ id: 'hopital', icon: 'cross', tag: 'Santé', title: 'Un hôpital veut tester votre modèle', sav: 'sante',
+    text: 'Un grand hôpital propose un essai pour résumer des dossiers de patients. Une erreur serait très visible.',
+    why: 'En médecine, une erreur coûte cher : l’usage reste supervisé par des professionnels.',
+    cond: S => S.seals >= 1 && S.tier >= 2,
+    a: { t: 'Accepter l’essai', die: true, need: S => Math.max(2, 5 - S.seals), b: [['die', 'Lancer le dé'], ['up', 'Réussi : Confiance +2, raté : −1']],
+      run: (S, r) => { const n = Math.max(2, 5 - S.seals); if (r >= n) { S.conf = clamp(S.conf + 2, 0, 5); return 'L’essai est un succès : le personnel médical est convaincu.'; } S.conf = clamp(S.conf - 1, 0, 5); return 'L’essai révèle des erreurs : la confiance baisse.'; } },
+    b: { t: 'Refuser', b: [['shield', 'Aucun risque']], run: S => 'Vous préférez attendre un modèle mieux testé.' } })
+];
+const evById = id => EVENTS.find(e => e.id === id);
+
+function drawEvent(S) {
+  const ok = EVENTS.filter(e => !S.usedEvents.includes(e.id) && e.cond(S));
+  if (!ok.length) return null;
+  const e = ok[Math.floor(rnd() * ok.length)];
+  return { id: e.id, done: false, choice: null, result: '', roll: null };
+}
+
+function chooseEvent(S, which) {
+  const e = evById(S.ev.id), c = e[which];
+  if (c.cost && S.cash < c.cost) return false;
+  const roll = c.die ? d6() : null;
+  S.ev.result = c.run(S, roll);
+  S.ev.roll = roll;
+  S.ev.choice = which;
+  S.ev.done = true;
+  S.usedEvents.push(e.id);
+  if (e.sav) unlock(S, e.sav);
+  return true;
+}
+/* ===== INTERFACE : outils, plateau ===== */
+const $app = document.getElementById('app');
+const U = { screen: 'cover', selSize: 2, selPrice: 'free', selDiff: 'closed', selProd: 'voice', selPart: 'cursor', modal: null, toast: '', dieShown: false, evAnim: false };
+let S = null;
+
+/* ---------- Sauvegarde ---------- */
+const KEY = 'gradient2.save', KKEY = 'gradient2.known';
+function save() { try { if (S && !S.over) { const scr = ['event', 'launch', 'recap'].includes(U.screen) ? U.screen : 'board'; localStorage.setItem(KEY, JSON.stringify({ v: 1, t: Date.now(), screen: scr, S })); } localStorage.setItem(KKEY, JSON.stringify([...KNOWN])); } catch (e) {} }
+function loadKnown() { try { (JSON.parse(localStorage.getItem(KKEY) || '[]')).forEach(x => KNOWN.add(x)); } catch (e) {} }
+function loadSave() { try { const j = localStorage.getItem(KEY); if (!j) return null; const o = JSON.parse(j); if (o && o.S && o.S.year) return o; if (o && o.year) return { S: o, screen: 'board', t: 0 }; return null; } catch (e) { return null; } }
+function clearSave() { try { localStorage.removeItem(KEY); } catch (e) {} }
+
+/* ---------- Icônes et petits objets ---------- */
+function ico(n, s = 26, c = '#ffd23f') {
+  const st = `stroke="${INK}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"`;
+  const P = {
+    globe: `<circle cx="13" cy="13" r="9" fill="${c}" ${st}/><path d="M4 13h18M13 4c-4 4-4 14 0 18M13 4c4 4 4 14 0 18" fill="none" ${st} stroke-width="1.6"/>`,
+    doc: `<path d="M6 3h10l5 5v15H6z" fill="${c}" ${st}/><path d="M10 13h8M10 17h8M10 21h5" fill="none" ${st} stroke-width="1.8"/>`,
+    spark: `<path d="M13 3l2.500 6.500L22 12l-6.500 2.500L13 21l-2.500-6.500L4 12l6.500-2.500z" fill="${c}" ${st}/>`,
+    server: `<rect x="4" y="3" width="18" height="6" rx="2" fill="${c}" ${st}/><rect x="4" y="10" width="18" height="6" rx="2" fill="${c}" ${st}/><rect x="4" y="17" width="18" height="6" rx="2" fill="${c}" ${st}/><path d="M8 6h.01M8 13h.01M8 20h.01" ${st}/>`,
+    clock: `<circle cx="13" cy="13" r="9" fill="${c}" ${st}/><path d="M13 7v6l4 3" fill="none" ${st}/>`,
+    hex: `<path d="M13 3l8.500 5v10L13 23l-8.500-5V8z" fill="${c}" ${st}/>`,
+    shield: `<path d="M13 3l8 3v6c0 5-3.500 8-8 10-4.500-2-8-5-8-10V6z" fill="${c}" ${st}/><path d="M9 13l3 3 5-6" fill="none" ${st}/>`,
+    flask: `<path d="M10 3h6M11 3v7L5 21h16L15 10V3" fill="${c}" ${st}/><path d="M8 16h10" ${st} stroke-width="1.6"/>`,
+    gear: `<circle cx="13" cy="13" r="6" fill="${c}" ${st}/><circle cx="13" cy="13" r="2" fill="#fff" ${st} stroke-width="1.6"/><path d="M13 3v3M13 20v3M3 13h3M20 13h3M6 6l2 2M18 18l2 2M20 6l-2 2M8 18l-2 2" fill="none" ${st}/>`,
+    person: `<circle cx="13" cy="8" r="5" fill="${c}" ${st}/><path d="M4 23c0-6 4-9 9-9s9 3 9 9z" fill="${c}" ${st}/>`,
+    coin: `<circle cx="13" cy="13" r="10" fill="${c}" ${st}/><path d="M17 9.500C16.300 8 14.800 7.200 13 7.200c-2.200 0-3.800 1.100-3.800 2.900 0 1.800 1.600 2.500 3.800 3 2.200.5 3.800 1.200 3.800 3 0 1.800-1.700 2.900-3.800 2.900-1.900 0-3.400-.9-4.100-2.400M13 4.800v2.400M13 18.800v2.400" fill="none" ${st} stroke-width="2"/>`,
+    die: `<rect x="4" y="4" width="18" height="18" rx="4" fill="#fff" ${st}/><path d="M9 9h.01M17 9h.01M9 17h.01M17 17h.01M13 13h.01" ${st} stroke-width="3.200"/>`,
+    lock: `<rect x="5" y="11" width="16" height="11" rx="3" fill="${c}" ${st}/><path d="M9 11V8a4 4 0 0 1 8 0v3" fill="none" ${st}/>`,
+    unlock: `<rect x="5" y="11" width="16" height="11" rx="3" fill="${c}" ${st}/><path d="M9 11V8a4 4 0 0 1 7.500-2" fill="none" ${st}/>`,
+    chat: `<path d="M3 5h16v11H10l-5 4v-4H3z" fill="${c}" ${st}/>`,
+    image: `<rect x="3" y="4" width="20" height="18" rx="3" fill="${c}" ${st}/><path d="M5 19l5-6 4 4 3-3 4 5" fill="none" ${st}/>`,
+    mic: `<rect x="9" y="2" width="8" height="14" rx="4" fill="${c}" ${st}/><path d="M5 12a8 8 0 0 0 16 0M13 20v4" fill="none" ${st}/>`,
+    code: `<path d="M9 6L3 13l6 7M17 6l6 7-6 7M14 4l-3 18" fill="none" ${st} stroke-width="2.400"/>`,
+    robot: `<rect x="4" y="9" width="18" height="12" rx="4" fill="${c}" ${st}/><path d="M13 5v4M9.500 15h.01M16.500 15h.01" ${st} stroke-width="2.600"/><circle cx="13" cy="4" r="1.600" fill="${INK}"/>`,
+    handshake: `<path d="M1 8h4v10H1zM21 8h4v10h-4z" fill="#fff" ${st}/><path d="M5 9.500l5-2.500h4l3 2 4 .5v6l-4 3-3 1.500-3-1-2.500 1L5 16z" fill="${c}" ${st}/><path d="M10 15l3 2.500M13 14l3 2.500M8 13l3 2.500" fill="none" ${st} stroke-width="1.800"/>`,
+    up: `<path d="M13 22V6M6 12l7-7 7 7" fill="none" ${st} stroke-width="2.800"/>`,
+    down: `<path d="M13 4v16M6 14l7 7 7-7" fill="none" ${st} stroke-width="2.800"/>`,
+    scales: `<path d="M13 4v16M7 22h12M4 8h18" fill="none" ${st}/><path d="M4 8L1 15h6zM22 8l-3 7h6z" fill="${c}" ${st}/>`,
+    chip: `<rect x="6" y="6" width="14" height="14" rx="3" fill="${c}" ${st}/><path d="M10 2v4M16 2v4M10 20v4M16 20v4M2 10h4M2 16h4M20 10h4M20 16h4" ${st}/><rect x="10" y="10" width="6" height="6" rx="1" fill="#fff" ${st} stroke-width="1.600"/>`,
+    key: `<circle cx="9" cy="11" r="5.500" fill="${c}" ${st}/><path d="M13 14l9 8M19 19l3-3M16 17l3-3" fill="none" ${st}/>`,
+    bolt: `<path d="M15 2L5 15h7l-2 9 10-13h-7z" fill="${c}" ${st}/>`,
+    mask: `<path d="M3 6c6 3 14 3 20 0 1 8-3 16-10 16S2 14 3 6z" fill="${c}" ${st}/><path d="M8 11h3M15 11h3M9 16c2 2 6 2 8 0" fill="none" ${st}/>`,
+    leaf: `<path d="M4 22C4 11 10 4 22 4c0 12-6 18-16 18" fill="${c}" ${st}/><path d="M4 22C9 15 13 12 18 9" fill="none" ${st}/>`,
+    cross: `<path d="M10 3h6v7h7v6h-7v7h-6v-7H3v-6h7z" fill="${c}" ${st}/>`,
+    rival: `<circle cx="8" cy="9" r="4" fill="${c}" ${st}/><circle cx="18" cy="9" r="4" fill="#fff" ${st}/><path d="M2 22c0-5 3-8 6-8s6 3 6 8M12 22c0-5 3-8 6-8s6 3 6 8" fill="none" ${st}/>`,
+    flag: `<path d="M6 3v20M6 5h14l-3 5 3 5H6" fill="${c}" ${st}/>`,
+    book: `<path d="M4 4h8c2 0 3 1 3 3v15c0-2-1-3-3-3H4zM22 4h-7v18c0-2 1-3 3-3h4z" fill="${c}" ${st}/>`,
+    text: ''
+  };
+  return `<svg width="${s}" height="${s}" viewBox="0 0 26 26" aria-hidden="true" style="flex:none">${P[n] || ''}</svg>`;
+}
+function meeple(col, w = 30, cls = '') {
+  return `<svg class="${cls}" width="${w}" height="${Math.round(w * 1.27)}" viewBox="0 0 30 38" aria-hidden="true" style="flex:none"><circle cx="15" cy="9" r="7" fill="${col}" stroke="${INK}" stroke-width="2.500"/><path d="M4 36c0-9 4-15 11-15s11 6 11 15z" fill="${col}" stroke="${INK}" stroke-width="2.500" stroke-linejoin="round"/></svg>`;
+}
+function pips(n, max) {
+  n = Math.round(n);
+  let h = '<span class="pips" aria-hidden="true">';
+  for (let i = 0; i < max; i++) h += `<i class="${i < n ? 'f' : ''}"></i>`;
+  return h + '</span>';
+}
+const plural = (n, a, b) => (n > 1 ? b : a);
+function toast(t) { U.toast = t; render(); clearTimeout(toast._t); toast._t = setTimeout(() => { U.toast = ''; render(); }, 2400); }
+
+/* ---------- Rendu général ---------- */
+function render(keep = true) {
+  const sc = $app.querySelector('.scroll');
+  const st = sc && keep ? sc.scrollTop : 0;
+  const R = SCREENS[U.screen] || SCREENS.cover;
+  $app.innerHTML = R() + (U.modal ? modalHTML() : '') + (U.toast ? `<div class="toast" role="status">${U.toast}</div>` : '');
+  const ns = $app.querySelector('.scroll');
+  if (ns) ns.scrollTop = st;
+  $app.dataset.s = U.screen;
+  save();
+  const after = AFTER[U.screen];
+  if (after) after();
+}
+function go(s) { U.screen = s; U.toast = ''; render(false); if (S) save(); }
+
+function barHTML(title, sub, back = 'board', icon = 'back') {
+  return `<div class="bar"><button class="sq y" data-a="go" data-v="${back}" aria-label="Retour"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M13 4l-7 7 7 7M6 11h12" fill="none" stroke="${INK}" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="t"><span>${sub}</span><b>${title}</b></div></div>`;
+}
+
+/* ---------- Plateau ---------- */
+function hudHTML(phase) {
+  const P = power(S), res = reserved(S), fc = fixedCosts(S);
+  const names = ['Actualité', 'Planifier', 'Lancer', 'Marché'];
+  const ph = names.map((n, i) => `<span class="ph ${i < phase ? 'done' : i === phase ? 'on' : ''}">${n}</span>`).join('');
+  return `<div class="paper hud">
+    <div class="top"><span class="d" style="font-size:15px;white-space:nowrap">Année ${S.year} sur ${MAXY}</span><div class="phases">${ph}</div></div>
+    <div class="inds">
+      <button class="ind" data-a="ind" data-v="argent" aria-label="Détails de l’indicateur" style="background:var(--yel)"><span class="cap">Argent</span><b>${fmt(S.cash, 0)} M$</b><small style="color:${res ? '#8f2a0b' : 'inherit'}">${res ? '−' + fmt(res, 0) + ' prévus' : 'charges ' + fmt(fc.total, 0) + '/an'}</small></button>
+      <button class="ind" data-a="ind" data-v="puis" aria-label="Détails de l’indicateur" style="background:var(--blu)"><span class="cap">Puissance</span><b>${S.tier ? SIZES[S.tier - 1].name.replace('Frontière', 'Front.') : '—'}</b>${pips(P, 10)}</button>
+      <button class="ind" data-a="ind" data-v="conf" aria-label="Détails de l’indicateur" style="background:var(--grn)"><span class="cap">Confiance</span><b>${S.conf} sur 5</b>${pips(S.conf, 5)}</button>
+      <button class="ind" data-a="ind" data-v="usage" aria-label="Détails de l’indicateur" style="background:var(--pin)"><span class="cap">Usage</span><b>${fmt(S.users)} M</b>${pips(Math.min(10, S.users / 2.5), 10)}</button>
+    </div></div>`;
+}
+
+function trackHTML(pw, ghostFrom) {
+  const pos = v => (clamp(v, 0, 10) * 10) + '%';
+  const defs = [['puis', 'var(--blu)', 4, 'Puissance'], ['conf', 'var(--grn)', 12, 'Confiance'], ['usage', 'var(--pin)', 20, 'Usage']];
+  let pw2 = '';
+  defs.forEach(([k, c, top]) => {
+    if (ghostFrom) pw2 += `<span class="ghost" style="left:${pos(ghostFrom[k])};top:${top + 1}px;color:${c}"></span>`;
+    pw2 += `<span class="pawn" data-k="${k}" data-to="${pos(pw[k])}" style="left:${ghostFrom ? pos(ghostFrom[k]) : pos(pw[k])};top:${top}px;background:${c}"></span>`;
+  });
+  return `<div class="track"><div class="trackkey"><span>Vers le Seuil</span><span>Les trois pions au drapeau</span></div>
+    <div class="lane" style="margin:0 12px"><div class="rail"></div><div class="flag" style="left:${pos(SEUIL)}"></div>${pw2}</div>
+    <div class="trackkey"><span><i style="background:var(--blu)"></i>Puissance</span><span><i style="background:var(--grn)"></i>Confiance</span><span><i style="background:var(--pin)"></i>Usage</span></div></div>`;
+}
+
+function spotHTML(k, o) {
+  const it = planned(S, k);
+  const on = !!it;
+  const lock = o.lock && !on;
+  const cost = on ? it.cost : (o.cost ?? costOf(S, k, o.p));
+  const co = o.noCost ? '' : (cost === 0 ? '<span class="co fr">gratuit</span>' : `<span class="co">${fmt(cost, 0)} M$</span>`);
+  return `<button class="spot ${on ? 'on' : ''} ${lock ? 'lock' : ''}" data-a="${o.act || 'spot'}" data-v="${o.v || k}" aria-pressed="${on}" aria-label="${o.name}${on ? ', équipe posée' : ''}">
+    <span class="ring">${on ? meeple('#9d8cff', 30, 'mp') : ico(o.icon, 28, o.col || '#fff')}</span>
+    <span class="nm">${o.name}${o.sub ? `<br><span style="font-weight:400;font-size:11px">${o.sub}</span>` : ''}</span>${co}</button>`;
+}
+
+function zoneHTML(name, col, right, body) {
+  return `<section class="paper zone"><header class="dots" style="background-color:${col}"><b>${name}</b><span>${right}</span></header><div class="body">${body}</div></section>`;
+}
+
+function boardScreen() {
+  const q = proj(S);
+  const lockC = S.yr.lockCalcul;
+  // Données
+  const zData = zoneHTML('Données', 'var(--grn)', `${q.data} sur ${DATA_MAX}`,
+    `<div class="spots">${spotHTML('web', { icon: 'globe', name: 'Web libre' })}${spotHTML('lic', { icon: 'doc', name: 'Licences' })}${spotHTML('syn', { icon: 'spark', name: 'Synthèse', lock: S.tier < 1 })}</div>`);
+  // Calcul
+  let rooms = '';
+  for (let i = 0; i < 5; i++) {
+    const total = q.rooms;
+    if (i < S.rooms) rooms += '<span class="room o"></span>';
+    else if (i < total) rooms += `<span class="room o" style="outline:3px solid var(--yel);outline-offset:1px"></span>`;
+    else if (i - total < q.rent && false) rooms += '';
+    else rooms += '<span class="room e"></span>';
+  }
+  const extra = (q.rent ? `${q.rent} louée${plural(q.rent, '', 's')}` : '') + (msRooms(S) ? ' · 2 Microsoft' : '');
+  const zCalc = zoneHTML('Calcul', 'var(--blu)', `${q.roomsAll} salle${plural(q.roomsAll, '', 's')}${S.yr.lockCalcul ? ' · bloqué' : ''}`,
+    `<div class="rooms">${rooms}</div>${extra ? `<div class="mini">${ico('clock', 16, '#fff')}${extra} cette année</div>` : ''}
+     <div class="spots">${spotHTML('build', { icon: 'server', name: 'Construire', lock: lockC })}${spotHTML('rent', { icon: 'clock', name: 'Louer', lock: lockC })}</div>`);
+  // Atelier
+  const tr = S.plan.find(x => x.k === 'train');
+  const model = S.tier ? `<div class="mini" style="gap:8px">${ico('hex', 22, '#9d8cff')}<span>Modèle <b>${modelName(S)}</b> · qualité ${['correcte', 'bonne', 'percée'][S.quality]} · ${S.seals} sceau${plural(S.seals, '', 'x')}</span></div>` : `<div class="mini" style="gap:8px">${ico('hex', 22, '#fff')}<span>Aucun modèle pour l’instant.</span></div>`;
+  const zAtel = zoneHTML('Atelier', 'var(--vio)', S.tier ? 'En service' : 'Vide',
+    `${model}<div class="spots">${spotHTML('train', { icon: 'hex', name: 'Entraîner', act: 'go', v: 'atelier', cost: tr ? tr.cost : 0, noCost: !tr, sub: tr ? SIZES[tr.p - 1].name : 'choisir la taille', col: '#9d8cff' })}${spotHTML('test', { icon: 'shield', name: 'Tester', lock: S.tier < 1 && !tr })}</div>`);
+  // Talents
+  const zTal = zoneHTML('Talents', 'var(--pin)', `${q.R + q.E + q.S} personne${plural(q.R + q.E + q.S, '', 's')}`,
+    `<div class="spots">${spotHTML('hireR', { icon: 'flask', name: 'Recherche', sub: '× ' + q.R })}${spotHTML('hireE', { icon: 'gear', name: 'Ingénierie', sub: '× ' + q.E })}${spotHTML('hireS', { icon: 'shield', name: 'Sécurité', sub: '× ' + q.S })}</div>`);
+  // Marché
+  const mk = S.plan.find(x => x.k === 'mkt');
+  const pdOn = PROD_ORDER.filter(x => S.products[x] && x !== 'chat').map(x => PRODUCTS[x].name);
+  const pdPlan = S.plan.filter(x => x.k.startsWith('prod:')).map(x => PRODUCTS[x.k.slice(5)].name);
+  const ptPlan = S.plan.filter(x => x.k.startsWith('part:')).map(x => PARTNERS[x.k.slice(5)].name);
+  const tm = (cond) => cond ? `<span class="tm">${meeple('#9d8cff', 18, 'mp')}</span>` : '';
+  const pr = mk ? PRICES.find(x => x.id === mk.p.price) : priceOf(S);
+  const df = mk ? mk.p.diff : S.diff;
+  const zMkt = zoneHTML('Marché', 'var(--amb)', '4 leviers',
+    `<div class="tiles">
+      <button class="tile" data-a="go" data-v="market">${tm(mk)}<span class="cap">Prix</span><b>${pr.name}</b></button>
+      <button class="tile" data-a="go" data-v="market"><span class="cap">Diffusion</span><b>${DIFFS[df].short}</b></button>
+      <button class="tile" data-a="go" data-v="prod">${tm(pdPlan.length)}<span class="cap">Produits</span><b>${[...(S.products.chat ? ['Chat'] : []), ...pdOn, ...pdPlan.map(x => x + ' (prévu)')].join(', ') || 'Aucun'}</b></button>
+      <button class="tile" data-a="go" data-v="part">${tm(ptPlan.length)}<span class="cap">Partenaires</span><b>${[...S.contracts.map(c => PARTNERS[c.id].name), ...ptPlan.map(x => x + ' (prévu)')].join(', ') || 'Aucun'}</b></button>
+    </div>`);
+  // Main
+  const hand = S.hand.map(h => { const o = OPPS.find(x => x.id === h.id); return `<button class="card ${h.used ? 'used' : ''}" data-a="opp" data-v="${h.id}"><span class="z">${o.z}</span><b>${o.t}</b><span class="d2">${o.d}</span></button>`; }).join('');
+  // Plateau bas
+  const tot = teamsTotal(S), free = teamsFree(S);
+  let mps = '';
+  for (let i = 0; i < tot; i++) mps += i < free ? meeple('#ffd23f', 26) : `<span style="opacity:.5">${meeple('#9d8cff', 26)}</span>`;
+  const fc = fixedCosts(S);
+  return `${hudHTML(1)}
+    <div class="scroll board">
+      ${trackHTML(pawns(S))}
+      ${zData}${zCalc}${zAtel}${zTal}${zMkt}
+      <div class="lbl" style="margin-top:4px">Opportunités de l’année</div>
+      <div class="hand">${hand}</div>
+      <div class="row" style="justify-content:center;gap:8px"><button class="btn sec" style="min-height:44px;font-size:15px;flex:1" data-a="go" data-v="labo">Mon labo</button><button class="btn sec" style="min-height:44px;font-size:15px;flex:1" data-a="go" data-v="carnet">Carnet ${KNOWN.size} sur ${SAV_ORDER.length}</button><button class="btn sec" style="min-height:44px;font-size:15px;flex:1" data-a="toCover">Menu</button></div>
+    </div>
+    <div class="foot">
+      <div class="tray"><div class="mps" aria-hidden="true">${mps}</div><div class="tx">${free > 0 ? `${free} équipe${plural(free, '', 's')} à placer` : 'Toutes vos équipes sont posées'}${S.yr.teamsLost ? ' (une est occupée à corriger)' : ''}<br>${(S.cash - reserved(S)) < fc.total ? `<span style="color:#ffb199">Attention : il restera ${fmt(S.cash - reserved(S), 0)} M$ pour ${fmt(fc.total, 0)} M$ de charges.</span>` : `<span style="opacity:.75">Charges fixes de l’année : ${fmt(fc.total, 0)} M$</span>`}</div></div>
+      <button class="btn" data-a="launch">${S.plan.length ? 'Lancer l’année' : 'Passer l’année'}</button>
+    </div>`;
+}
+/* ===== INTERFACE : écrans secondaires ===== */
+const SCREENS = {}, AFTER = {};
+SCREENS.board = boardScreen;
+
+/* ---------- Couverture ---------- */
+SCREENS.cover = function () {
+  const sv0 = loadSave(), sv = sv0 && sv0.S;
+  const when = sv0 && sv0.t ? new Date(sv0.t).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+  return `<div class="scroll"><div class="cover">
+    <div style="position:relative;height:190px;display:grid;place-items:center" aria-hidden="true">
+      <div class="paper dots" style="width:250px;height:150px;transform:rotate(-6deg);background-color:var(--paper);position:relative;overflow:hidden">
+        <div style="position:absolute;left:14px;right:14px;top:92px;height:6px;background:repeating-linear-gradient(90deg,var(--ink) 0 12px,transparent 12px 18px);opacity:.6"></div>
+        <span class="pawn" style="left:56px;top:78px;background:var(--blu)"></span>
+        <span class="pawn" style="left:118px;top:84px;background:var(--grn)"></span>
+        <span class="pawn" style="left:176px;top:76px;background:var(--pin)"></span>
+        <div class="flag" style="left:214px;top:56px"></div>
+        <div style="position:absolute;left:14px;top:12px">${ico('server', 34, '#27b3ff')}</div>
+        <div style="position:absolute;left:54px;top:12px">${ico('flask', 34, '#ff6fa5')}</div>
+        <div style="position:absolute;left:94px;top:12px">${ico('doc', 34, '#39c18a')}</div>
+      </div>
+      <div class="die" style="position:absolute;right:26px;top:6px;transform:rotate(12deg)">5</div>
+      <div style="position:absolute;left:24px;bottom:2px;transform:rotate(-8deg)">${meeple('#ffd23f', 40)}</div>
+      <div style="position:absolute;right:46px;bottom:8px">${ico('coin', 42, '#ffd23f')}</div>
+    </div>
+    <div><h1 class="title">Gradient</h1>
+    <p class="d" style="font-size:20px;margin:10px 0 0;line-height:1.15">Dirigez un laboratoire d’IA, un tour après l’autre.</p></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn" data-a="new">Nouvelle partie</button>
+      ${sv && !sv.over ? `<button class="btn sec" data-a="resume">Reprendre l’année ${sv.year}<small>sauvegardée${when ? ' le ' + when : ''} sur cet appareil</small></button>` : ''}
+      <div class="grid2"><button class="btn sec" style="min-height:48px;font-size:15px" data-a="go" data-v="carnet">Carnet de savoirs<small>${KNOWN.size} sur ${SAV_ORDER.length}</small></button><button class="btn sec" style="min-height:48px;font-size:15px" data-a="go" data-v="rules">Règles<small>en une page</small></button></div>
+    </div>
+    <div class="cap" style="text-align:center;opacity:.8;line-height:1.5">Sauvegarde automatique sur cet appareil<br>1 joueur · ${MAXY} années · environ 25 minutes</div>
+  </div></div>`;
+};
+
+/* ---------- Règles ---------- */
+SCREENS.rules = function () {
+  const step = (n, c, t, d) => `<div class="row" style="align-items:flex-start"><span class="sq" style="background:${c};font-family:var(--d);font-weight:800;font-size:18px;border-radius:50%">${n}</span><div><b class="d" style="font-size:16px">${t}</b><div style="font-size:13.5px;font-weight:700">${d}</div></div></div>`;
+  return `${barHTML('Règles du jeu', 'Gradient', S ? 'board' : 'cover')}
+  <div class="scroll">
+    <div class="sav"><span class="cap">But</span><span>Faire franchir le Seuil à vos trois pions en ${MAXY} années : Puissance, Confiance et Usage au drapeau. Si l’argent tombe à zéro, c’est perdu.</span></div>
+    <div class="paper" style="padding:14px;display:flex;flex-direction:column;gap:12px">
+      <b class="d" style="font-size:19px">Une année, quatre phases</b>
+      ${step(1, 'var(--blu)', 'Actualité', 'Une carte tombe : un dilemme à trancher.')}
+      ${step(2, 'var(--grn)', 'Planifier', 'Posez vos équipes sur les zones du plateau. Une équipe fait une chose.')}
+      ${step(3, 'var(--pin)', 'Lancer', 'Les actions se jouent. Le dé de recherche décide d’un entraînement.')}
+      ${step(4, 'var(--amb)', 'Le marché répond', 'Les pions avancent. Le reçu explique pourquoi.')}
+    </div>
+    <div class="paper" style="padding:14px;display:flex;flex-direction:column;gap:8px">
+      <b class="d" style="font-size:19px">Quatre indicateurs</b>
+      <div style="font-size:13.5px;font-weight:700"><b>Argent</b> : à zéro, la partie s’arrête.<br><b>Puissance</b> : ce que sait faire votre meilleur modèle.<br><b>Confiance</b> : monte avec les tests, baisse avec les incidents.<br><b>Usage</b> : combien de personnes vous utilisent.</div>
+    </div>
+    <div class="paper" style="padding:14px;display:flex;flex-direction:column;gap:6px">
+      <b class="d" style="font-size:19px">Pour entraîner un modèle</b>
+      <div style="font-size:13.5px;font-weight:700">Il faut assez de données, de salles de calcul et de talents. Il en manque ? Vous pouvez tenter quand même, mais le dé perd 1 par manque.</div>
+    </div>
+    <div class="sav"><span class="cap">Carnet de savoirs</span><span>Chaque décision peut débloquer une carte qui explique l’idée réelle derrière. Elles restent dans votre carnet d’une partie à l’autre.</span></div>
+  </div>`;
+};
+
+/* ---------- Atelier ---------- */
+function fixChoice(ti) {
+  const m = ti.miss;
+  if (m.data > 0) {
+    const k = !planned(S, 'lic') ? 'lic' : !planned(S, 'web') ? 'web' : 'syn';
+    return { k, label: { lic: 'Prendre des licences', web: 'Puiser dans le web libre', syn: 'Données synthétiques' }[k] };
+  }
+  if (m.rooms > 0) return { k: !planned(S, 'build') ? 'build' : 'rent', label: !planned(S, 'build') ? 'Construire une salle' : 'Louer une salle' };
+  if (m.talent > 0) {
+    const k = !planned(S, 'hireR') && ti.q.R <= ti.q.E ? 'hireR' : !planned(S, 'hireE') ? 'hireE' : 'hireR';
+    return { k, label: k === 'hireR' ? 'Recruter en recherche' : 'Recruter en ingénierie' };
+  }
+  return null;
+}
+SCREENS.atelier = function () {
+  unlock(S, 'params', true); unlock(S, 'echelle', true);
+  const sel = U.selSize, ti = trainInfo(S, sel), sz = ti.sz, q = ti.q;
+  const hs = [100, 124, 148, 172];
+  const shelf = SIZES.map(z => {
+    const lk = z.unlock && S.year < z.unlock, past = z.id < S.tier, on = z.id === sel;
+    const cur = z.id === S.tier;
+    return `<button class="size ${on ? 'sel' : lk || past ? 'lk' : ''}" style="height:${hs[z.id - 1]}px" data-a="selSize" data-v="${z.id}" aria-pressed="${on}">
+      <span style="display:flex;flex-direction:column;gap:4px;align-items:flex-start"><b>${z.name}</b>${on ? '<span class="tg">Choisi</span>' : cur ? '<span class="tg">En service</span>' : ''}</span>
+      <small>${lk ? 'Verrouillé<br>Année ' + z.unlock : past ? 'Dépassé' : z.par}</small></button>`;
+  }).join('');
+  const jar = (label, val, max, need, color, miss, note, unit) => {
+    const pct = clamp(val / max, 0, 1) * 100, np = clamp(need / max, 0, 1) * 100;
+    return `<div class="jar ${miss ? 'mq' : ''}"><div class="jarb"><div class="fl dots" style="height:${pct}%;background-color:${color}"></div><div class="rq" style="bottom:${np}%"></div></div>
+      <b class="d" style="font-size:14px">${label}</b><span style="font-size:11.5px;font-weight:700;color:${miss ? '#b53a12' : '#0f7a4f'};text-align:center;line-height:1.15">${miss ? 'Il manque ' + miss + ' ' + unit : 'Assez'}</span><span style="font-size:11px;font-weight:700;opacity:.65">${val} sur ${need} ${note}</span></div>`;
+  };
+  const rm = Math.min(ROOM_MAX, q.roomsAll);
+  const jars = jar('Données', q.data, DATA_MAX, sz.data, 'var(--grn)', ti.miss.data, 'requis', ti.miss.data > 1 ? 'données' : 'donnée')
+    + jar('Calcul', rm, ROOM_MAX, sz.rooms, ti.miss.rooms ? 'var(--amb)' : 'var(--blu)', ti.miss.rooms, 'requis', ti.miss.rooms > 1 ? 'salles' : 'salle')
+    + jar('Talents', q.R + q.E, TALENT_MAX * 2, sz.talent, 'var(--pin)', ti.miss.talent, 'requis', ti.miss.talent > 1 ? 'personnes' : 'personne');
+  const cells = ['var(--pin)', 'var(--blu)', 'var(--blu)', 'var(--grn)', 'var(--grn)', 'var(--yel)'];
+  const R = q.R;
+  const fx = fixChoice(ti);
+  const ex = planned(S, 'train');
+  const past = sel < S.tier, lk = sz.unlock && S.year < sz.unlock;
+  const complete = ti.pen === 0;
+  let trainBtn;
+  if (ex && ex.p === sel) trainBtn = `<button class="btn sec" data-a="trainPlace">Retirer l’entraînement<small>${sz.name} · équipe rendue</small></button>`;
+  else if (past || lk) trainBtn = `<button class="btn off" data-a="x" data-why="${past ? 'Votre modèle actuel est déjà plus gros.' : 'Cette taille se débloque à l’année ' + sz.unlock + '.'}">Entraîner<small>${past ? 'déjà dépassé' : 'verrouillé'}</small></button>`;
+  else trainBtn = `<button class="btn ${complete ? '' : 'sec'}" data-a="trainPlace">${complete ? 'Entraîner · ' + fmt(costOf(S, 'train', sel), 0) + ' M$' : 'Entraîner quand même'}<small style="${complete ? '' : 'color:#b53a12'}">${complete ? '1 équipe' : 'dé −' + ti.pen + ' · risque · ' + fmt(costOf(S, 'train', sel), 0) + ' M$'}</small></button>`;
+  const fixBtn = fx ? `<button class="btn" data-a="fix" data-v="${fx.k}">${fx.label}<small>${fmt(costOf(S, fx.k), 0)} M$ · 1 équipe</small></button>` : `<button class="btn sec" data-a="go" data-v="board">Retour au plateau<small>tout est prêt</small></button>`;
+  return `${barHTML('Atelier du modèle', 'Année ' + S.year + ' · Planifier')}
+  <div class="scroll">
+    <div class="lbl">1 · Choisir la taille</div><div class="shelf">${shelf}</div>
+    <div class="lbl">2 · La recette du ${sz.name}</div>
+    <div class="jars">${jars}</div>
+    <div class="sav"><span class="cap">Savoir · Loi d’échelle</span><span>${SAVOIRS.echelle.quoi}</span></div>
+    <div class="lbl">3 · Le dé de recherche</div>
+    <div class="row" style="align-items:center;gap:12px"><div class="die" aria-hidden="true">?</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px;min-width:0"><div class="dbar">${cells.map((c, i) => `<span style="background:${c};${i === 0 ? 'border-radius:5px 0 0 5px' : i === 5 ? 'border-radius:0 5px 5px 0' : ''}"></span>`).join('')}</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700"><span>Raté</span><span>Correct</span><span>Bon</span><span>Percée</span></div>
+      <span style="font-size:12px;font-weight:700;color:var(--yel)">${ti.bonus > 0 ? '+' + ti.bonus + ' au dé (' + R + ' personne' + plural(R, '', 's') + ' en recherche' + (S.yr.dieBonus ? ', recherche accélérée' : '') + ')' : 'Aucun bonus au dé : la recherche aide'}${ti.pen ? ' · <span style="color:#ffb199">−' + ti.pen + ' pour ce qui manque</span>' : ''}</span></div></div>
+  </div>
+  <div class="foot"><div class="grid2">${fixBtn}${trainBtn}</div></div>`;
+};
+
+/* ---------- Prix et diffusion ---------- */
+SCREENS.market = function () {
+  const cur = { price: S.price, diff: S.diff };
+  const mk = planned(S, 'mkt');
+  const door = (id, ic, txt) => {
+    const lk = (S.diff === 'open' && id === 'closed') || (id === 'open' && hasContract(S, 'ms'));
+    return `<button class="door ${U.selDiff === id ? 'sel' : ''} ${lk ? 'lk' : ''}" data-a="selDiff" data-v="${id}" aria-pressed="${U.selDiff === id}">${ico(ic, 28, id === 'open' ? '#39c18a' : '#ff9f1c')}<b>${DIFFS[id].name}</b><span style="font-size:12px;font-weight:700;line-height:1.2">${txt}</span>${S.diff === id ? '<span class="pill" style="align-self:flex-start;background:var(--ink);color:var(--yel)">En place</span>' : lk ? '<span class="pill" style="align-self:flex-start">Impossible</span>' : ''}</button>`;
+  };
+  const rows = PRICES.map(p => `<button class="prow ${U.selPrice === p.id ? 'sel' : ''}" data-a="selPrice" data-v="${p.id}" aria-pressed="${U.selPrice === p.id}">
+    <span style="display:flex;flex-direction:column;gap:3px"><b>${p.name}</b>${S.price === p.id ? '<span class="pill" style="align-self:flex-start;background:var(--ink);color:var(--yel);font-size:10px;padding:1px 6px">En place</span>' : ''}</span>
+    <span class="pb"><span class="pbx"><span>Usage</span>${pips(p.usage, 5)}</span><span class="pbx"><span>Revenus</span>${pips(p.rev, 5)}</span><span class="pbx"><span>Charge</span>${pips(p.charge, 5)}</span></span></button>`).join('');
+  const same = U.selPrice === cur.price && U.selDiff === cur.diff;
+  const sameAsPlan = mk && mk.p.price === U.selPrice && mk.p.diff === U.selDiff;
+  const why = !sameAsPlan ? canPlace(S, 'mkt', { price: U.selPrice, diff: U.selDiff }) : { ok: true };
+  let btn;
+  if (sameAsPlan) btn = `<button class="btn sec" data-a="confirmMkt">Retirer cette décision<small>équipe rendue</small></button>`;
+  else if (same) btn = `<button class="btn off" data-a="x" data-why="Rien ne change par rapport à aujourd’hui.">Déjà en place<small>choisissez autre chose</small></button>`;
+  else if (!why.ok && !(mk && why.why === 'Cette équipe est déjà posée ici.')) btn = `<button class="btn off" data-a="x" data-why="${why.why}">Confirmer<small>${why.why}</small></button>`;
+  else btn = `<button class="btn" data-a="confirmMkt">Confirmer · ${DIFFS[U.selDiff].short}, ${PRICES.find(x => x.id === U.selPrice).name}<small>${fmt(costOf(S, 'mkt', { price: U.selPrice, diff: U.selDiff }), 0)} M$ · 1 équipe</small></button>`;
+  const tipTxt = U.tipK === 'diff' ? DIFFS[U.selDiff].tip : PRICES.find(x => x.id === U.selPrice).tip;
+  const tipTitle = U.tipK === 'diff' ? (U.selDiff === 'open' ? 'Savoir · Poids ouverts' : 'Savoir · Modèle fermé') : 'Savoir · ' + PRICES.find(x => x.id === U.selPrice).name;
+  return `${barHTML('Prix et diffusion', 'Année ' + S.year + ' · Marché')}
+  <div class="scroll">
+    <div class="lbl">Diffusion du modèle</div>
+    <div class="doors">${door('closed', 'lock', 'Le modèle reste chez vous. Vous faites payer l’accès.')}${door('open', 'unlock', 'Tout le monde peut le télécharger. Irréversible.')}</div>
+    <div class="lbl">Prix de l’offre</div>
+    ${rows}
+    <div class="sav"><span class="cap">${tipTitle}</span><span>${tipTxt}</span></div>
+  </div>
+  <div class="foot">${btn}</div>`;
+};
+
+/* ---------- Produits ---------- */
+SCREENS.prod = function () {
+  const pos = { chat: [141, 4], images: [24, 84], voice: [262, 84], code: [212, 240], agents: [70, 240] };
+  const cname = S.tier ? SIZES[S.tier - 1].name : 'Aucun';
+  const piece = id => {
+    const pd = PRODUCTS[id], on = S.products[id], pl = planned(S, 'prod:' + id);
+    const miss = id === 'chat' ? (S.tier ? null : { t: 'Un modèle' }) : pd.req.find(r => !r.f(S));
+    const cls = on || pl ? '' : miss ? 'lk' : 'av';
+    const bg = on || pl ? `background:${pd.col}` : '';
+    const sub = on ? 'En ligne' : pl ? 'Prévu' : miss ? 'Verrouillé' : 'Disponible';
+    return `<button class="piece ${cls} ${U.selProd === id ? 'sel' : ''}" style="left:${pos[id][0]}px;top:${pos[id][1]}px;${bg}" data-a="selProd" data-v="${id}" aria-pressed="${U.selProd === id}">${ico(pd.icon, 26, on || pl ? '#fff' : pd.col)}<b>${pd.name}</b><small>${sub}</small>${pl ? `<span style="position:absolute;right:-8px;top:-10px">${meeple('#9d8cff', 22)}</span>` : ''}</button>`;
+  };
+  const id = U.selProd, pd = PRODUCTS[id], on = S.products[id], pl = planned(S, 'prod:' + id);
+  const reqs = id === 'chat' ? [] : pd.req;
+  const chips = reqs.map(r => `<span class="chip ${r.f(S) ? 'ok' : 'no'}">${r.t} · ${r.f(S) ? 'ok' : 'il manque'}</span>`).join('');
+  let btn;
+  if (id === 'chat') btn = `<button class="btn off" data-a="x" data-why="Le chat s’ouvre tout seul avec votre premier modèle.">Chat<small>${S.products.chat ? 'déjà en ligne' : 'avec votre premier modèle'}</small></button>`;
+  else if (on) btn = `<button class="btn off" data-a="x" data-why="Ce produit est déjà en ligne.">${pd.name} en ligne<small>rien à faire</small></button>`;
+  else if (pl) btn = `<button class="btn sec" data-a="launchProd">Retirer le lancement<small>équipe rendue</small></button>`;
+  else {
+    const r = canPlace(S, 'prod:' + id);
+    btn = r.ok ? `<button class="btn" data-a="launchProd">Lancer ${pd.name.toLowerCase()} · ${fmt(costOf(S, 'prod:' + id), 0)} M$<small>1 équipe</small></button>` : `<button class="btn off" data-a="x" data-why="${r.why}">Lancer ${pd.name.toLowerCase()}<small>${r.why}</small></button>`;
+  }
+  return `${barHTML('Produits autour du modèle', 'Année ' + S.year + ' · Marché')}
+  <div class="scroll">
+    <div class="hexa">
+      <svg style="position:absolute;inset:0" width="358" height="322" viewBox="0 0 358 322" aria-hidden="true">
+        <path d="M179 160L179 50M179 160L293 122M179 160L250 258M179 160L108 258M179 160L65 122" stroke="#f2f0fa" stroke-width="2.500" stroke-dasharray="3 6" stroke-linecap="round" fill="none" opacity=".7"/>
+        <path d="M179 100l45 26v52l-45 26-45-26v-52z" fill="#9d8cff" stroke="${INK}" stroke-width="3.500" stroke-linejoin="round"/>
+        <text x="179" y="153" text-anchor="middle" font-family="Bricolage Grotesque,sans-serif" font-weight="800" font-size="15" fill="${INK}">Modèle</text>
+        <text x="179" y="174" text-anchor="middle" font-family="Bricolage Grotesque,sans-serif" font-weight="800" font-size="19" fill="${INK}">${cname}</text>
+        <text x="179" y="192" text-anchor="middle" font-family="Atkinson Hyperlegible,sans-serif" font-weight="700" font-size="11" fill="${INK}">${S.tier ? S.seals + ' sceau' + (S.seals > 1 ? 'x' : '') : 'à venir'}</text>
+      </svg>${PROD_ORDER.map(piece).join('')}
+    </div>
+    <div class="paper" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px"><span class="d" style="font-size:22px;line-height:1">${pd.name}</span><span class="pill" style="background:${pd.col}">Produit</span></div>
+      <span style="font-size:14px;line-height:1.3;font-weight:700">${pd.desc}</span>
+      ${chips ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${chips}</div>` : ''}
+      <div class="grid2" style="grid-template-columns:repeat(3,1fr)"><div class="pbx"><span>Usage</span>${pips(pd.u, 5)}</div><div class="pbx"><span>Revenus</span>${pips(pd.r, 5)}</div><div class="pbx"><span>Charge</span>${pips(pd.c, 5)}</div></div>
+      <div class="sav" style="box-shadow:none"><span class="cap">${pd.tip.startsWith('Savoir') ? pd.tip.split(' : ')[0] : 'Savoir · ' + pd.name}</span><span>${pd.tip.startsWith('Savoir') ? pd.tip.split(' : ').slice(1).join(' : ').replace(/^./, c => c.toUpperCase()) : pd.tip}</span></div>
+    </div>
+  </div>
+  <div class="foot">${btn}</div>`;
+};
+
+/* ---------- Partenaires ---------- */
+SCREENS.part = function () {
+  const slots = [];
+  S.contracts.forEach(c => slots.push(`<div class="slot fill"><span><b class="d" style="font-size:14px">${PARTNERS[c.id].name}</b><br><span style="font-size:11px">${c.left} an${plural(c.left, '', 's')} restant${plural(c.left, '', 's')}</span></span></div>`));
+  S.plan.filter(x => x.k.startsWith('part:')).forEach(x => slots.push(`<div class="slot fill" style="background:var(--tint)"><span><b class="d" style="font-size:14px">${PARTNERS[x.k.slice(5)].name}</b><br><span style="font-size:11px">à signer</span></span></div>`));
+  while (slots.length < 2) slots.push('<div class="slot">Libre</div>');
+  const id = U.selPart, pt = PARTNERS[id], signed = hasContract(S, id), pl = planned(S, 'part:' + id);
+  const miss = pt.req.filter(r => !r.f(S));
+  const r = canPlace(S, 'part:' + id);
+  const col = list => list.map(t => `<span style="font-size:13px;line-height:1.28;font-weight:700">${t}</span>`).join('');
+  let btns;
+  if (signed) btns = `<button class="btn off" style="flex:1" data-a="x" data-why="Contrat en cours.">Contrat en cours</button>`;
+  else if (pl) btns = `<button class="btn sec" style="flex:1" data-a="signPart">Annuler la signature<small>équipe rendue</small></button>`;
+  else btns = `<button class="btn sec" style="min-height:46px;flex:none;font-size:14px" data-a="nextPart">Autre</button>` + (r.ok ? `<button class="btn" style="flex:1;min-height:46px;font-size:15px" data-a="signPart">Signer · 1 équipe</button>` : `<button class="btn off" style="flex:1;min-height:46px;font-size:15px" data-a="x" data-why="${r.why}">Signer<small>${r.why.replace('.', '')}</small></button>`);
+  const rows = PART_ORDER.filter(x => x !== id).map(x => {
+    const p = PARTNERS[x], sg = hasContract(S, x), mq = p.req.find(q => !q.f(S));
+    const seals = p.need ? `${Math.min(S.seals, p.need)} sceau${p.need > 1 ? 'x' : ''} sur ${p.need}` : '';
+    return `<button class="crow ${mq ? 'lk' : ''}" data-a="selPart" data-v="${x}"><span class="n"><b>${p.name}</b><span>${p.tag}</span></span>${sg ? '<span class="chip ok">Actif</span>' : mq ? `<span class="mini">${ico('lock', 16, '#ffd23f')}${p.need ? seals : mq.t}</span>` : `<span class="chip ok">${p.chips[0]}</span><span class="chip no">${p.chips[1]}</span>`}</button>`;
+  }).join('');
+  return `${barHTML('Partenaires', 'Année ' + S.year + ' · Marché')}
+  <div class="scroll">
+    <div class="row" style="align-items:center"><span style="font-size:12.5px;font-weight:700;width:92px;line-height:1.2">Deux emplacements de contrat</span>${slots.join('')}</div>
+    <div class="paper" style="overflow:hidden">
+      <div class="dots" style="background-color:${pt.col};border-bottom:3px solid var(--ink);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px"><div style="display:flex;flex-direction:column;line-height:1.05"><span class="cap">Contrat</span><span class="d" style="font-size:26px">${pt.name}</span></div><span class="chip">${pt.tag}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr">
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-right:2px solid rgba(27,23,64,.2)"><div class="row" style="align-items:center;gap:6px"><span style="width:20px;height:20px;border-radius:50%;background:var(--grn);border:2px solid var(--ink);display:grid;place-items:center;font-weight:800;line-height:1">+</span><b class="d" style="font-size:14px">Vous gagnez</b></div>${col(pt.win)}</div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px"><div class="row" style="align-items:center;gap:6px"><span style="width:20px;height:20px;border-radius:50%;background:var(--ora);border:2px solid var(--ink);display:grid;place-items:center;font-weight:800;line-height:1">−</span><b class="d" style="font-size:14px">Vous cédez</b></div>${col(pt.lose)}</div>
+      </div>
+      <div style="border-top:2px solid rgba(27,23,64,.2);padding:8px 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span class="cap" style="opacity:.65">Durée ${pt.years} ans</span>${pt.req.map(q => `<span class="chip ${q.f(S) ? 'ok' : 'no'}">${q.t}${q.f(S) ? '' : ' · il manque'}</span>`).join('')}</div>
+      <div style="border-top:2px solid rgba(27,23,64,.2);padding:10px 12px;display:flex;gap:10px;align-items:center">${btns}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">${rows}</div>
+  </div>`;
+};
+
+/* ---------- Mon labo ---------- */
+SCREENS.labo = function () {
+  let mp = '';
+  for (let i = 0; i < teamsTotal(S); i++) mp += meeple(i < teamsFree(S) ? '#ffd23f' : '#9d8cff', 30);
+  let rooms = '';
+  const all = S.rooms + S.rented + msRooms(S);
+  for (let i = 0; i < 5; i++) rooms += i < S.rooms ? '<div class="room o"></div>' : i < S.rooms + S.rented ? '<div class="room r"></div>' : i < all ? '<div class="room m"></div>' : '<div class="room e"></div>';
+  const seals = Array.from({ length: 3 }, (_, i) => `<span style="width:24px;height:24px;border-radius:50%;border:2px ${i < S.seals ? 'solid' : 'dashed'} var(--ink);background:${i < S.seals ? 'var(--grn)' : 'transparent'};display:grid;place-items:center">${i < S.seals ? '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6l3 3 5-6" fill="none" stroke="#1b1740" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}</span>`).join('');
+  const prods = PROD_ORDER.map(p => `<span style="width:46px;height:46px;border-radius:12px;display:grid;place-items:center;${S.products[p] ? `background:${PRODUCTS[p].col};border:2.5px solid var(--ink);box-shadow:0 3px 0 var(--ink)` : 'border:2.5px dashed rgba(242,240,250,.5)'}" title="${PRODUCTS[p].name}">${S.products[p] ? ico(PRODUCTS[p].icon, 24, '#fff') : ''}</span>`).join('');
+  const ctr = [0, 1].map(i => { const c = S.contracts[i]; return c ? `<span style="flex:1;min-height:46px;border-radius:12px;background:${PARTNERS[c.id].col};border:2.5px solid var(--ink);box-shadow:0 3px 0 var(--ink);display:grid;place-items:center;font-family:var(--d);font-weight:800;font-size:13px;color:var(--ink);text-align:center;padding:2px">${PARTNERS[c.id].name}<br><span style="font-family:var(--b);font-size:11px">${c.left} an${plural(c.left, '', 's')}</span></span>` : '<span style="flex:1;min-height:46px;border-radius:12px;border:2.5px dashed rgba(242,240,250,.5);display:grid;place-items:center;font-size:12px;font-weight:700">Libre</span>'; }).join('');
+  const fc = fixedCosts(S);
+  return `${barHTML('Mon labo', 'Année ' + S.year + ' · Ma réserve')}
+  <div class="scroll">
+    <div><div class="lbl" style="margin-bottom:6px">Mes équipes · ${teamsTotal(S)} en tout</div><div class="row" style="background:rgba(242,240,250,.1);border:2.5px solid rgba(242,240,250,.4);border-radius:14px;padding:8px 10px;align-items:center;flex-wrap:wrap;gap:4px">${mp}<span style="flex:1;font-size:12px;font-weight:700;min-width:120px">Jaunes : libres. Violettes : posées cette année.</span></div></div>
+    <div><div class="lbl" style="margin-bottom:6px">Salles de calcul · ${all} sur 5</div><div class="rooms">${rooms}</div><div style="font-size:11.5px;font-weight:700;margin-top:6px">Bleu : à vous · rayé : louée · mauve : Microsoft</div></div>
+    <div><div class="lbl" style="margin-bottom:6px">Mon modèle</div>
+      ${S.tier ? `<div class="paper" style="background:var(--vio);padding:10px 12px;display:flex;gap:12px;align-items:center">${ico('hex', 40, '#fff')}<div style="flex:1"><b class="d" style="font-size:18px">${modelName(S)} · ${SIZES[S.tier - 1].par}</b><div style="font-size:12.5px;font-weight:700">${S.diff === 'open' ? 'Poids ouverts' : 'Fermé'} · qualité ${['correcte', 'bonne', 'percée'][S.quality]}</div><div class="row" style="gap:4px;margin-top:5px">${seals}</div></div></div>` : `<div class="paper" style="border-style:dashed;box-shadow:none;background:rgba(242,240,250,.9);padding:12px"><b class="d">Aucun modèle</b><div style="font-size:13px;font-weight:700">Entraînez-en un à l’atelier.</div></div>`}</div>
+    <div class="grid2"><div><div class="lbl" style="margin-bottom:6px">En ligne</div><div class="row" style="flex-wrap:wrap;gap:6px">${prods}</div></div><div><div class="lbl" style="margin-bottom:6px">Contrats</div><div class="row">${ctr}</div></div></div>
+    <div class="paper" style="padding:10px 14px;display:flex;flex-direction:column;gap:2px"><span class="cap mut">Équipe de ${S.R + S.E + S.S} personnes</span><span style="font-size:13.5px;font-weight:700">${S.R} personne${plural(S.R, '', 's')} en recherche, ${S.E} en ingénierie, ${S.S} en sécurité.<br>Charges fixes : ${fmt(fc.total, 0)} M$ par an (salaires ${fmt(fc.sal, 0)}, salles ${fmt(fc.up, 0)}${fc.partner ? ', terrain ' + fc.partner : ''}).</span></div>
+    <button class="btn" data-a="go" data-v="carnet"><span style="display:flex;align-items:center;gap:10px">${ico('book', 26, '#fff')}Carnet de savoirs · ${KNOWN.size} sur ${SAV_ORDER.length}</span></button>
+  </div>`;
+};
+
+/* ---------- Carnet ---------- */
+SCREENS.carnet = function () {
+  const back = S && U.from !== 'cover' ? 'board' : 'cover';
+  const tiles = SAV_ORDER.map(id => KNOWN.has(id) ? `<button class="ct" data-a="savoir" data-v="${id}"><span class="cap" style="opacity:.6">${SAVOIRS[id].cat}</span><b>${SAVOIRS[id].t}</b></button>` : `<div class="ct lk"><span class="cap" style="opacity:.7">${SAVOIRS[id].cat}</span><b class="d" style="font-size:20px">?</b></div>`).join('');
+  return `${barHTML('Carnet de savoirs', KNOWN.size + ' sur ' + SAV_ORDER.length + ' découverts', U.carnetBack || 'cover')}
+  <div class="scroll"><div class="sav"><span class="cap">Comment les débloquer</span><span>Chaque cas se débloque en jouant : une actualité, un produit, un contrat, un test.</span></div><div class="cgrid">${tiles}</div></div>`;
+};
+
+/* ---------- Actualité ---------- */
+SCREENS.event = function () {
+  const e = evById(S.ev.id), done = S.ev.done;
+  const tok = (w, col) => {
+    const c = e[w];
+    const poor = c.cost && S.cash < c.cost;
+    const bl = c.b.map(([i, t]) => `<span class="bl">${i === 'text' ? '' : ico(i, 18, '#ffd23f')}${t}</span>`).join('') + (c.die ? `<span class="bl" style="font-weight:700">Il faut ${c.need(S)} ou plus</span>` : '');
+    return `<button class="tok ${poor ? 'off' : ''}" style="background:${col}" data-a="${poor ? 'x' : 'evChoose'}" data-v="${w}" ${poor ? 'data-why="Pas assez d’argent pour ce choix."' : ''}><b>${c.t}</b><span style="display:flex;flex-direction:column;gap:4px">${bl}</span></button>`;
+  };
+  const card = `<div class="paper" style="overflow:hidden;transform:rotate(-1deg);border-radius:24px;box-shadow:0 6px 0 var(--ink)">
+    <div class="evart dots">${ico(e.icon, 110, '#f2f0fa')}<span class="pill" style="position:absolute;left:12px;top:12px;background:var(--ink);color:var(--yel);border:0;font-size:11px">Actualité · ${e.tag}</span></div>
+    <div style="padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px"><span class="d" style="font-size:25px;line-height:1.05">${e.title}</span><span style="font-size:15px;line-height:1.38;font-weight:700">${e.text}</span>
+    <div style="background:var(--tint);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;margin-top:2px"><span class="cap" style="opacity:.7">Pourquoi cela arrive</span><span style="font-size:13px;line-height:1.3;font-weight:700">${e.why}</span></div></div></div>`;
+  let bottom;
+  if (!done) bottom = `<div class="grid2">${tok('a', 'var(--grn)')}${tok('b', 'var(--pin)')}</div>`;
+  else {
+    const c = e[S.ev.choice];
+    const dieEl = S.ev.roll ? `<div class="row" style="align-items:center;gap:12px"><div class="die ${U.evAnim ? 'roll' : ''}" id="evdie">${U.evAnim ? '?' : S.ev.roll}</div><span style="font-size:13px;font-weight:700">${U.evAnim ? 'Le dé roule…' : 'Il fallait ' + c.need(S) + ' ou plus. Vous avez fait ' + S.ev.roll + '.'}</span></div>` : '';
+    bottom = `<div class="paper" style="padding:12px 14px;display:flex;flex-direction:column;gap:8px"><span class="cap mut">Votre choix : ${c.t}</span>${dieEl}${U.evAnim ? '' : `<span style="font-size:15px;font-weight:700;line-height:1.3">${S.ev.result}</span>`}</div>`;
+  }
+  return `<div class="scroll" style="align-items:stretch;padding-top:16px"><div class="row" style="justify-content:space-between"><span class="cap" style="color:var(--yel)">Année ${S.year} · Actualité</span><span class="cap">Carte 1 sur 1</span></div>${card}${bottom}</div>
+  ${done && !U.evAnim ? `<div class="foot"><button class="btn" data-a="evContinue">Planifier l’année</button></div>` : ''}`;
+};
+
+/* ---------- Lancer ---------- */
+function dieHTML(d, done) {
+  const cells = ['var(--pin)', 'var(--blu)', 'var(--blu)', 'var(--grn)', 'var(--grn)', 'var(--yel)'];
+  const mark = clamp(d.total, 1, 6) - 1;
+  const lab = { fail: 'Raté', ok: 'Correct', good: 'Bon', great: 'Percée' }[d.outcome];
+  return `<div class="paper" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+    <div class="row" style="align-items:center;gap:14px"><div class="die roll" id="die">?</div>
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px"><span class="cap mut">Entraînement du ${SIZES[d.size - 1].name}</span>
+    <div class="dbar">${cells.map((c, i) => `<span style="background:${c};${i === mark ? 'outline:3px solid var(--ink);outline-offset:1px;transform:scaleY(1.35);visibility:' + (done ? 'visible' : 'hidden') : ''}"></span>`).join('')}</div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700"><span>Raté</span><span>Correct</span><span>Bon</span><span>Percée</span></div></div></div>
+    <div id="dres" ${done ? '' : 'hidden'} style="display:${done ? 'flex' : 'none'};flex-direction:column;gap:2px"><span class="d" style="font-size:22px">${lab}</span><span style="font-size:13px;font-weight:700">Dé ${d.roll}${d.bonus ? ' + ' + d.bonus + ' (équipe de recherche)' : ''}${d.pen ? ' − ' + d.pen + ' (il manquait ' + [d.miss.data ? d.miss.data + ' donnée' + plural(d.miss.data, '', 's') : '', d.miss.rooms ? d.miss.rooms + ' salle' + plural(d.miss.rooms, '', 's') : '', d.miss.talent ? d.miss.talent + ' talent' + plural(d.miss.talent, '', 's') : ''].filter(Boolean).join(', ') + ')' : ''} = ${d.total}</span></div></div>`;
+}
+SCREENS.launch = function () {
+  const acts = S.acts.map((a, i) => `<div class="paper act ${a.tone === 'neg' ? 'neg' : ''}" style="animation-delay:${(S.die ? 1.5 : 0) + i * 0.3}s"><span class="ic">${ico(a.icon, 24, '#fff')}</span><div style="display:flex;flex-direction:column;gap:2px;min-width:0"><b>${a.title}</b><span>${a.detail}</span></div></div>`).join('');
+  return `<div class="bar"><span class="sq" style="background:var(--pin);border-radius:50%;font-family:var(--d);font-weight:800;font-size:20px">3</span><div class="t"><span>Phase 3 · Lancer</span><b>Lancer l’année ${S.year}</b></div></div>
+  <div class="scroll">
+    ${S.die ? dieHTML(S.die, U.dieShown) : ''}
+    ${acts || '<div class="paper" style="padding:14px;font-weight:700">Vous passez l’année sans lancer d’action. Les charges continuent de courir.</div>'}
+  </div>
+  <div class="foot"><button class="btn" data-a="afterLaunch">Voir le marché</button></div>`;
+};
+AFTER.launch = function () {
+  if (!S.die || U.dieShown) return;
+  const el = document.getElementById('die'), res = document.getElementById('dres');
+  let n = 0;
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fin = () => { U.dieShown = true; if (el) { el.classList.remove('roll'); el.textContent = S.die.roll; } if (res) { res.hidden = false; res.style.display = 'flex'; } const cells = document.querySelectorAll('.dbar span'); const m = clamp(S.die.total, 1, 6) - 1; if (cells[m]) { cells[m].style.visibility = 'visible'; cells[m].style.outline = '3px solid #1b1740'; cells[m].style.outlineOffset = '1px'; cells[m].style.transform = 'scaleY(1.35)'; } };
+  if (reduce) return fin();
+  const t = setInterval(() => { if (!document.getElementById('die') || U.screen !== 'launch') { clearInterval(t); return; } n++; const e2 = document.getElementById('die'); if (e2) e2.textContent = 1 + Math.floor(Math.random() * 6); if (n > 12) { clearInterval(t); fin(); } }, 100);
+};
+
+/* ---------- Le marché répond ---------- */
+SCREENS.recap = function () {
+  const r = S.recap, d = r.d;
+  const lines = r.lines.map(l => `<div class="rc"><div class="f"><span class="cap mut">Votre choix</span><b>${l.from}</b></div><svg width="20" height="14" viewBox="0 0 22 14" aria-hidden="true"><path d="M2 7h16M12 2l6 5-6 5" fill="none" stroke="${INK}" stroke-width="2.500" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="e">${l.stat ? `<span class="st cap ${l.tone}">${l.stat}</span>` : ''}<span>${l.to}</span></div></div>`).join('');
+  const dl = (n, v) => `<div class="dl"><span class="cap">${n}</span><b>${v}</b></div>`;
+  const dp = d.P ? (d.P > 0 ? '+' : '−') + Math.abs(d.P) : '=';
+  const dc = d.conf ? (d.conf > 0 ? '+' : '−') + Math.abs(d.conf) : '=';
+  const du = Math.abs(d.U) < 0.05 ? '=' : (d.U > 0 ? '+' : '−') + fmt(Math.abs(d.U)) + ' M';
+  return `<div class="bar"><span class="sq" style="background:var(--amb);border-radius:50%;font-family:var(--d);font-weight:800;font-size:20px">4</span><div class="t"><span>Phase 4 · Le marché répond</span><b>Fin de l’année ${r.year}</b></div></div>
+  <div class="scroll">
+    ${trackHTML(r.after, r.before)}
+    <div class="paper" style="overflow:hidden"><div style="background:var(--ink);color:var(--paper);padding:8px 14px;display:flex;justify-content:space-between;align-items:center"><span class="d" style="font-size:15px;letter-spacing:.04em;text-transform:uppercase">Pourquoi ça s’est passé</span><span style="font-size:11px;font-weight:700;opacity:.75">${r.lines.length} causes</span></div>${lines}</div>
+    <div class="deltas">${dl('Argent', (d.cash >= 0 ? '+' : '−') + fmt(Math.abs(d.cash), 0) + ' M$')}${dl('Puissance', dp)}${dl('Confiance', dc)}${dl('Usage', du)}</div>
+  </div>
+  <div class="foot"><button class="btn" data-a="next">${S.over ? 'Voir le résultat' : 'Année suivante'}</button></div>`;
+};
+AFTER.recap = function () {
+  if (U.pawnsDone === S.year) return;
+  U.pawnsDone = S.year;
+  setTimeout(() => document.querySelectorAll('.pawn[data-to]').forEach(p => { p.style.left = p.dataset.to; }), 350);
+};
+
+/* ---------- Fin de partie ---------- */
+SCREENS.end = function () {
+  const pw = pawns(S), score = (pw.puis + pw.conf + pw.usage) / 3;
+  let t, sub, col = 'var(--yel)';
+  if (S.over === 'win') { t = 'Le Seuil est franchi'; sub = `Année ${S.year} : vos trois pions touchent le drapeau. Un laboratoire puissant, utilisé et en qui l’on a confiance.`; col = 'var(--grn)'; }
+  else if (S.over === 'bankrupt') { t = 'La pile est à zéro'; sub = 'Les charges ont rattrapé les recettes. Les salaires et les salles de calcul se paient chaque année, même sans revenus.'; col = 'var(--ora)'; }
+  else { t = score >= 5 ? 'Un laboratoire respecté' : score >= 3 ? 'Un laboratoire qui tient' : 'Un laboratoire discret'; sub = `${MAXY} années passées. Le Seuil reste devant vous : il manquait ${[pw.puis < SEUIL ? 'de la puissance' : '', pw.conf < SEUIL ? 'de la confiance' : '', pw.usage < SEUIL ? 'de l’audience' : ''].filter(Boolean).join(' et ') || 'un souffle'}.`; }
+  const st = (n, v) => `<div class="dl" style="align-items:flex-start;padding:8px 10px"><span class="cap">${n}</span><b style="font-size:17px">${v}</b></div>`;
+  const hist = S.history.slice(-10);
+  return `<div class="scroll" style="padding-top:18px">
+    <div class="paper dots" style="background-color:${col};padding:18px 16px;display:flex;flex-direction:column;gap:8px"><span class="cap">Fin de partie · année ${S.year}</span><span class="d" style="font-size:34px;line-height:1">${t}</span><span style="font-size:14.5px;font-weight:700;line-height:1.3">${sub}</span></div>
+    ${trackHTML(pw)}
+    <div class="grid2">${st('Modèle', S.tier ? modelName(S) : 'Aucun')}${st('Usage', fmt(S.users) + ' M')}${st('Confiance', S.conf + ' sur 5')}${st('Argent', fmt(S.cash, 0) + ' M$')}</div>
+    <div class="sav"><span class="cap">Ce que vous avez appris</span><span>${KNOWN.size} savoir${plural(KNOWN.size, '', 's')} sur ${SAV_ORDER.length} dans votre carnet. Rejouez avec une autre stratégie pour débloquer les autres.</span></div>
+  </div>
+  <div class="foot"><button class="btn" data-a="new">Rejouer</button><div class="grid2"><button class="btn sec" style="min-height:46px;font-size:15px" data-a="carnetEnd">Carnet de savoirs</button><button class="btn sec" style="min-height:46px;font-size:15px" data-a="toCover">Couverture</button></div></div>`;
+};
+
+/* ---------- Fenêtres ---------- */
+function modalHTML() {
+  const m = U.modal;
+  if (m.type === 'how') {
+    return `<div class="mask" style="padding:16px 0"><div class="paper" style="padding:16px;display:flex;flex-direction:column;gap:12px"><span class="d" style="font-size:24px">Comment jouer</span>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:14.5px;font-weight:700"><div class="row" style="gap:10px"><span style="flex:none">${meeple('#ffd23f', 26)}</span><span>Vos équipes sont jaunes. Touchez un emplacement pointillé pour y poser une équipe. Retouchez-le pour la reprendre.</span></div>
+      <div class="row" style="gap:10px"><span style="flex:none">${ico('hex', 28, '#9d8cff')}</span><span>L’Atelier, le Marché et les produits s’ouvrent sur leur propre écran.</span></div>
+      <div class="row" style="gap:10px"><span style="flex:none">${ico('flag', 28, '#ffd23f')}</span><span>Amenez Puissance, Confiance et Usage au drapeau avant la dixième année.</span></div></div>
+      <button class="btn" data-a="closeModal">Compris</button></div></div>`;
+  }
+  if (m.type === 'ind') return indModal(m.id);
+  const sv = SAVOIRS[m.id];
+  return `<div class="mask" style="padding:12px 0"><div style="display:flex;flex-direction:column;gap:12px">
+    <div class="paper" style="overflow:hidden;transform:rotate(.6deg);border-radius:24px;box-shadow:0 6px 0 var(--ink)">
+      <div class="dots" style="background-color:var(--pin);border-bottom:3px solid var(--ink);padding:12px 16px;display:flex;align-items:center;gap:14px">${ico('book', 56, '#f2f0fa')}<div style="display:flex;flex-direction:column;line-height:1.05;gap:4px"><span class="cap">${m.fresh ? 'Savoir débloqué · ' : 'Savoir · '}${sv.cat}</span><span class="d" style="font-size:26px">${sv.t}</span></div></div>
+      <div class="bk"><span class="cap mut">C’est quoi ?</span><p>${sv.quoi}</p></div>
+      <div class="bk t"><span class="cap mut">Dans le jeu</span><p>${sv.jeu}</p></div>
+      <div class="bk"><span class="cap mut">Dans le monde réel</span><p>${sv.reel}</p></div></div>
+    <button class="btn grn" data-a="closeModal">${m.fresh ? 'Ranger dans le carnet' : 'Fermer'}</button></div></div>`;
+}
+
+function showSavoirs(then) {
+  if (S && S.newSav && S.newSav.length) { U.modal = { type: 'sav', id: S.newSav.shift(), fresh: true, then }; render(); }
+  else then();
+}
+
+/* ---------- Fiche d'un indicateur ---------- */
+const IND = {
+  argent: { t: 'Argent', col: 'var(--yel)', ic: 'coin', what: 'Si la pile tombe à zéro à la fin d’une année, la partie s’arrête.',
+    up: ['Entraîner un modèle puis ouvrir un produit : sans eux, aucune recette.', 'Choisir un prix qui rapporte : Payant seulement ou Paliers plutôt que Gratuit.', 'Signer des contrats : Cursor, Microsoft, recherche médicale, constructeur automobile.', 'Accepter un financement quand il se présente.', 'Garder des serveurs qui tiennent : la saturation retire 20 % des revenus.'],
+    down: ['Les salaires : 2 M$ par an et par personne.', 'Les salles de calcul : 3 M$ par an et par salle, plus leur achat.', 'Les entraînements, les produits, les licences, les tests.', 'Les réponses au public : plus il y en a, plus la facture monte.', 'Le Gratuit et les poids ouverts : beaucoup d’usage, peu de revenus.'],
+    now: S => `Charges fixes de l’année : ${fmt(fixedCosts(S).total, 0)} M$ (salaires ${fmt(fixedCosts(S).sal, 0)}, salles ${fmt(fixedCosts(S).up, 0)}).` },
+  puis: { t: 'Puissance', col: 'var(--blu)', ic: 'hex', what: 'Ce que sait faire votre meilleur modèle. Le drapeau est à ' + SEUIL + ' sur 10.',
+    up: ['Entraîner un modèle plus gros : Petit, Moyen, Grand, puis Frontière à l’année 6.', 'Réussir le dé de recherche : recruter en recherche aide, et rien ne doit manquer dans la recette.', 'Réentraîner le même modèle pour en améliorer la qualité.', 'Terminer un contrat Robots : le modèle gagne 1.'],
+    down: ['Un entraînement raté : l’argent est perdu.', 'Trop de données synthétiques : le modèle s’appauvrit.', 'Ignorer des données polluées.'],
+    now: S => S.tier ? `Modèle ${modelName(S)}, qualité ${['correcte', 'bonne', 'percée'][S.quality]} : ${power(S)} sur 10.` : 'Aucun modèle : entraînez-en un à l’atelier.' },
+  conf: { t: 'Confiance', col: 'var(--grn)', ic: 'shield', what: 'Le crédit que vous accorde le public. Elle multiplie votre croissance. Le drapeau est à 3 sur 5.',
+    up: ['Tester votre modèle : chaque sceau réduit le risque et, bien testé, la confiance monte d’un point par an.', 'Recruter des personnes en sécurité.', 'Répondre aux alertes : rapport au régulateur, filigrane, énergie renouvelable.', 'Un contrat de recherche médicale réussi.', 'Publier des poids ouverts seulement après 2 sceaux.'],
+    down: ['Un incident : plus le modèle est gros et peu testé, plus c’est probable.', 'Des serveurs saturés.', 'Les produits agents et images, et les poids ouverts, qui augmentent le risque.', 'Ignorer un jailbreak, un deepfake ou une réponse fausse.', 'Refuser de rendre des comptes ou accepter la pression d’un fonds d’investissement.'],
+    now: S => S.tier ? `Votre modèle a ${S.seals} sceau${S.seals > 1 ? 'x' : ''} sur ${Math.min(S.tier, 3)} utiles. Confiance : ${S.conf} sur 5.` : `Confiance : ${S.conf} sur 5.` },
+  usage: { t: 'Usage', col: 'var(--pin)', ic: 'person', what: 'Combien de millions de personnes vous utilisent. Le drapeau est à 15 millions.',
+    up: ['Un modèle plus puissant attire plus de monde.', 'Plus de produits : chat, voix, images, code, agents.', 'Un prix plus ouvert : Freemium ou Gratuit.', 'Les poids ouverts : l’usage presque double.', 'Cursor, et un bon niveau de confiance.'],
+    down: ['Chaque année, 12 % du public s’en va.', 'Des serveurs saturés : 8 % de plus partent.', 'Un prix Payant seulement freine les curieux.', 'Un rival qui publie un modèle ouvert.', 'Une confiance basse.'],
+    now: S => `${fmt(S.users)} million${S.users >= 2 ? 's' : ''} de personnes qui vous utilisent aujourd’hui.` }
+};
+function indModal(k) {
+  const d = IND[k];
+  const li = (arr, sign, c) => arr.map(t => `<div class="row" style="gap:8px;align-items:flex-start"><span style="width:20px;height:20px;flex:none;border-radius:50%;background:${c};border:2px solid var(--ink);display:grid;place-items:center;font-weight:800;line-height:1;font-size:14px">${sign}</span><span style="font-size:14px;font-weight:700;line-height:1.3">${t}</span></div>`).join('');
+  return `<div class="mask" style="padding:12px 0"><div style="display:flex;flex-direction:column;gap:12px">
+    <div class="paper" style="overflow:hidden;border-radius:22px;box-shadow:0 6px 0 var(--ink)">
+      <div class="dots" style="background-color:${d.col};border-bottom:3px solid var(--ink);padding:12px 16px;display:flex;align-items:center;gap:12px">${ico(d.ic, 40, '#f2f0fa')}<div style="display:flex;flex-direction:column;gap:2px"><span class="d" style="font-size:26px;line-height:1">${d.t}</span><span style="font-size:13px;font-weight:700;line-height:1.25">${d.what}</span></div></div>
+      <div class="bk t"><span class="cap mut">Où vous en êtes</span><p>${d.now(S)}</p></div>
+      <div class="bk" style="gap:8px"><span class="cap mut">Ce qui le fait monter</span>${li(d.up, '+', 'var(--grn)')}</div>
+      <div class="bk" style="gap:8px"><span class="cap mut">Ce qui le fait baisser</span>${li(d.down, '−', 'var(--ora)')}</div></div>
+    <button class="btn" data-a="closeModal">Fermer</button></div></div>`;
+}
+/* ===== INTERFACE : actions ===== */
+function toggleSpot(k, p) {
+  if (planned(S, k)) { unplace(S, k); render(); return true; }
+  const r = place(S, k, p);
+  if (!r.ok) { toast(r.why); return false; }
+  render(); return true;
+}
+
+function startMarket() { const mk = planned(S, 'mkt'); U.selPrice = mk ? mk.p.price : S.price; U.selDiff = mk ? mk.p.diff : S.diff; U.tipK = 'price'; }
+
+function act(a, v) {
+  switch (a) {
+    case 'x': return;
+    case 'new': {
+      KNOWN; S = newState(); clearSave(); U.dieShown = false; U.pawnsDone = 0; U.modal = KNOWN.size < 3 ? { type: 'how' } : null;
+      return go('board');
+    }
+    case 'resume': {
+      const sv = loadSave(); if (!sv) return;
+      S = sv.S; U.dieShown = true; U.pawnsDone = S.year; U.modal = null;
+      let scr = sv.screen || 'board';
+      if (scr === 'event' && !S.ev) scr = 'board';
+      if (scr === 'recap' && !S.recap) scr = 'board';
+      if (scr === 'launch' && !S.acts) scr = 'board';
+      return go(scr);
+    }
+    case 'toCover': S = null; return go('cover');
+    case 'go': {
+      if (v === 'market') startMarket();
+      if (v === 'prod' && !PROD_ORDER.includes(U.selProd)) U.selProd = 'voice';
+      if (v === 'atelier') { const t = planned(S, 'train'); U.selSize = t ? t.p : clamp(Math.max(S.tier, 1) + (S.tier >= 1 ? 1 : 0), 1, 3); if (SIZES[U.selSize - 1].unlock && S.year < SIZES[U.selSize - 1].unlock) U.selSize = S.tier || 1; if (!t && S.tier === 0) U.selSize = 1; }
+      if (v === 'carnet') U.carnetBack = U.screen === 'cover' ? 'cover' : U.screen === 'end' ? 'end' : 'board';
+      return go(v);
+    }
+    case 'carnetEnd': U.carnetBack = 'end'; return go('carnet');
+    case 'spot': return toggleSpot(v);
+    case 'fix': { const r = place(S, v); if (!r.ok) toast(r.why); render(); return; }
+    case 'selSize': U.selSize = +v; return render();
+    case 'trainPlace': {
+      const ex = planned(S, 'train');
+      if (ex && ex.p === U.selSize) { unplace(S, 'train'); return render(); }
+      if (ex) unplace(S, 'train');
+      const r = place(S, 'train', U.selSize);
+      if (!r.ok) { if (ex) place(S, 'train', ex.p); toast(r.why); return; }
+      return go('board');
+    }
+    case 'selPrice': U.selPrice = v; U.tipK = 'price'; return render();
+    case 'selDiff': {
+      if (v === 'closed' && S.diff === 'open') { toast('Un modèle publié ne se retire plus.'); return; }
+      if (v === 'open' && hasContract(S, 'ms')) { toast('Microsoft vous interdit les poids ouverts.'); return; }
+      U.selDiff = v; U.tipK = 'diff'; return render();
+    }
+    case 'confirmMkt': {
+      const ex = planned(S, 'mkt');
+      if (ex && ex.p.price === U.selPrice && ex.p.diff === U.selDiff) { unplace(S, 'mkt'); return render(); }
+      if (ex) unplace(S, 'mkt');
+      const r = place(S, 'mkt', { price: U.selPrice, diff: U.selDiff });
+      if (!r.ok) { if (ex) place(S, 'mkt', ex.p); toast(r.why); return; }
+      return go('board');
+    }
+    case 'selProd': U.selProd = v; return render();
+    case 'launchProd': {
+      const k = 'prod:' + U.selProd;
+      if (planned(S, k)) { unplace(S, k); return render(); }
+      const r = place(S, k); if (!r.ok) { toast(r.why); return; }
+      return go('board');
+    }
+    case 'selPart': U.selPart = v; return render();
+    case 'nextPart': { const i = PART_ORDER.indexOf(U.selPart); U.selPart = PART_ORDER[(i + 1) % PART_ORDER.length]; return render(); }
+    case 'signPart': {
+      const k = 'part:' + U.selPart;
+      if (planned(S, k)) { unplace(S, k); return render(); }
+      const r = place(S, k); if (!r.ok) { toast(r.why); return; }
+      return go('board');
+    }
+    case 'opp': {
+      const h = S.hand.find(x => x.id === v), o = OPPS.find(x => x.id === v);
+      if (h && h.used) { toast('Cette opportunité est déjà utilisée.'); return; }
+      if (v === 'lic') return toggleSpot('lic');
+      if (v === 'build') return toggleSpot('build');
+      if (v === 'test') return toggleSpot('test');
+      if (v === 'hire') return toggleSpot('hireR');
+      if (v === 'train') { U.selSize = Math.max(1, S.tier + (S.tier ? 1 : 0)); if (SIZES[U.selSize - 1].unlock && S.year < SIZES[U.selSize - 1].unlock) U.selSize = S.tier || 1; return go('atelier'); }
+      if (v === 'voice') { U.selProd = 'voice'; return go('prod'); }
+      if (v === 'cursor') { U.selPart = 'cursor'; return go('part'); }
+      if (v === 'open') { startMarket(); U.selDiff = 'open'; U.tipK = 'diff'; return go('market'); }
+      return;
+    }
+    case 'ind': U.modal = { type: 'ind', id: v }; return render();
+    case 'savoir': U.modal = { type: 'sav', id: v, fresh: false }; return render();
+    case 'closeModal': {
+      const th = U.modal && U.modal.then; U.modal = null;
+      if (th) return showSavoirs(th);
+      return render();
+    }
+    case 'launch': {
+      resolve(S); U.dieShown = false;
+      return go('launch');
+    }
+    case 'afterLaunch': {
+      if (!(S.recap && S.recap.year === S.year)) endYear(S);
+      return showSavoirs(() => { U.modal = null; go('recap'); });
+    }
+    case 'next': {
+      if (S.over) { clearSave(); save(); return go('end'); }
+      nextYear(S);
+      return go(S.ev ? 'event' : 'board');
+    }
+    case 'evChoose': {
+      const ok = chooseEvent(S, v);
+      if (!ok) { toast('Pas assez d’argent pour ce choix.'); return; }
+      if (S.ev.roll) { U.evAnim = true; render(); setTimeout(() => { U.evAnim = false; render(); }, 1100); }
+      else render();
+      save();
+      return;
+    }
+    case 'evContinue': return showSavoirs(() => { U.modal = null; go('board'); });
+  }
+}
+
+$app.addEventListener('click', e => {
+  const t = e.target.closest('[data-a]');
+  if (!t) return;
+  if (t.classList.contains('off')) { toast(t.dataset.why || 'Pas possible maintenant.'); return; }
+  act(t.dataset.a, t.dataset.v);
+});
+
+loadKnown();
+window.__g = { get S() { return S; }, U, act, go, render };
+render();
+</script>
+
+</body></html>
